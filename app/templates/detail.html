@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Build #{{ row.build_id }} · {{ row.job_name }}{% endblock %}
+{% block content %}
+
+<div class="back"><a href="/">← 返回构建列表</a></div>
+
+<section class="detail-hero">
+  <div>
+    <div class="eyebrow">BUILD DETAIL</div>
+    <h1>{{ row.job_name }} <span>#{{ row.build_id }}</span></h1>
+    <p>{{ row.build_date }}</p>
+  </div>
+  <span class="result large {{ (row.build_result or 'UNKNOWN')|lower }}">{{ row.build_result or 'UNKNOWN' }}</span>
+</section>
+
+{% if error %}
+<div class="alert alert-error" role="alert">{{ error }}</div>
+{% endif %}
+
+<div class="detail-grid">
+  <section class="info-card">
+    <h2>构建信息</h2>
+    <dl>
+      <dt>Job</dt><dd>{{ row.job_name }}</dd>
+      <dt>Build ID</dt>
+      <dd>
+        {% if row.build_url %}
+        <a class="build-link" href="{{ row.build_url }}" target="_blank" rel="noopener" title="打开 Jenkins 构建">#{{ row.build_id }} ↗</a>
+        {% else %}
+        #{{ row.build_id }}
+        {% endif %}
+      </dd>
+      <dt>构建时间</dt><dd>{{ row.build_date }}</dd>
+      <dt>构建耗时</dt>
+      <dd>{% if row.duration_ms is not none %}{{ '%.1f'|format(row.duration_ms / 1000) }} 秒{% else %}—{% endif %}</dd>
+      <dt>Build Result</dt>
+      <dd><span class="result {{ (row.build_result or 'UNKNOWN')|lower }}">{{ row.build_result or 'UNKNOWN' }}</span></dd>
+    </dl>
+  </section>
+
+  <section class="info-card">
+    <h2>Git 信息</h2>
+    <dl>
+      <dt>Repository</dt>
+      <dd class="break">
+        {% if row.git_repository and (row.git_repository.startswith('http://') or row.git_repository.startswith('https://')) %}
+        <a class="ext-link" href="{{ row.git_repository }}" target="_blank" rel="noopener">{{ row.git_repository }}</a>
+        {% else %}
+        {{ row.git_repository or '—' }}
+        {% endif %}
+      </dd>
+      <dt>Branch</dt><dd><span class="pill branch">{{ row.git_branch or '—' }}</span></dd>
+      <dt>Commit</dt><dd><code class="full">{{ row.git_commit or '—' }}</code></dd>
+    </dl>
+  </section>
+
+  <section class="info-card wide">
+    <h2>Docker 镜像</h2>
+    <dl>
+      <dt>Registry</dt><dd>{{ row.docker_registry or '—' }}</dd>
+      <dt>Repository</dt><dd>{{ row.docker_repository or '—' }}</dd>
+      <dt>Tag</dt><dd><code class="full">{{ row.docker_image_tag or '—' }}</code></dd>
+      <dt>Digest</dt><dd><code class="full break">{{ row.docker_image_digest or '—' }}</code></dd>
+    </dl>
+  </section>
+</div>
+
+<div class="actions">
+  {% if row.build_url %}
+  <a class="btn primary" href="{{ row.build_url }}" target="_blank" rel="noopener">打开 Jenkins 构建 ↗</a>
+  {% endif %}
+  <a class="btn ghost" href="/admin">保留策略设置</a>
+</div>
+
+<section class="admin-card" aria-labelledby="admin-delete-heading">
+  <h2 id="admin-delete-heading">管理：删除此记录</h2>
+  <p class="admin-help">
+    删除不可恢复（除非有数据库备份）。填写<strong>管理密码</strong>，并在确认框输入 <code>DELETE</code>。
+    密码仅在提交时发送，不会写入页面源码。
+  </p>
+  {% if not admin_configured %}
+  <div class="alert alert-warn" role="status">服务端未配置 <code>ADMIN_PASSWORD</code>，删除功能不可用。</div>
+  {% endif %}
+  <form class="admin-delete-form" method="post" action="/build/{{ row.id }}/delete" autocomplete="off">
+    <div class="admin-fields">
+      <label for="admin-password">管理密码
+        <input id="admin-password" name="password" type="password" required autocomplete="current-password" spellcheck="false" {% if not admin_configured %}disabled{% endif %}>
+      </label>
+      <label for="admin-confirm">确认（输入 DELETE）
+        <input id="admin-confirm" name="confirm" type="text" required placeholder="DELETE" autocomplete="off" spellcheck="false" {% if not admin_configured %}disabled{% endif %}>
+      </label>
+    </div>
+    <button class="btn danger" type="submit" {% if not admin_configured %}disabled{% endif %}>永久删除此构建记录</button>
+  </form>
+</section>
+{% endblock %}

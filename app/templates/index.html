@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}Build Archive · Jenkins{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div>
+    <div class="eyebrow">BUILD HISTORY &amp; TRACEABILITY</div>
+    <h1>构建历史归档</h1>
+    <p>即使 Jenkins 的历史构建记录被清理，也可以长期追溯 Git 分支、Commit 与 Docker 镜像。</p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn ghost" href="/admin">保留策略</a>
+  </div>
+</section>
+
+{% if flash %}
+<div class="alert alert-success" role="status">{{ flash }}</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-error" role="alert">{{ error }}</div>
+{% endif %}
+
+<section class="stats" aria-label="统计概览">
+  <div class="stat">
+    <span>构建总数</span>
+    <strong>{{ stats.total }}</strong>
+  </div>
+  <div class="stat">
+    <span>Job 数量</span>
+    <strong>{{ stats.jobs }}</strong>
+  </div>
+  <div class="stat">
+    <span>Branch 数量</span>
+    <strong>{{ stats.branches }}</strong>
+  </div>
+  <div class="stat accent">
+    <span>成功构建</span>
+    <strong>{{ stats.success }}</strong>
+  </div>
+</section>
+
+{% if retention and retention.days > 0 %}
+<p class="retention-hint">
+  当前最长保留 <b>{{ retention.days }}</b> 天
+  {% if retention.max_per_job > 0 %}，每 Job 最多 <b>{{ retention.max_per_job }}</b> 条{% endif %}
+  （来源：{{ retention.source }}）。
+  <a href="/admin">修改</a>
+</p>
+{% elif retention and retention.max_per_job > 0 %}
+<p class="retention-hint">
+  当前每 Job 最多保留 <b>{{ retention.max_per_job }}</b> 条（来源：{{ retention.source }}）。
+  <a href="/admin">修改</a>
+</p>
+{% else %}
+<p class="retention-hint muted-hint">未启用最长保留期限。<a href="/admin">配置保留策略</a></p>
+{% endif %}
+
+<form class="search-card {% if is_today_range %}is-today-filter{% endif %}" method="get" action="/" role="search">
+  {% if not dateFrom and not dateTo %}
+  <input type="hidden" name="all" value="1">
+  {% endif %}
+  <div class="search-main">
+    <label class="search-box">
+      <span aria-hidden="true">⌕</span>
+      <span class="sr-only">搜索</span>
+      <input name="q" value="{{ q }}" placeholder="搜索 Job、Branch、Commit、Docker Tag、Repository…">
+    </label>
+    <button class="btn primary" type="submit">搜索</button>
+  </div>
+
+  <div class="filters">
+    <label>Job
+      <select name="job">
+        <option value="">全部 Job</option>
+        {% for item in jobs %}
+        <option value="{{ item }}" {% if job == item %}selected{% endif %}>{{ item }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Branch
+      <input name="branch" value="{{ branch }}" placeholder="release/2.3.1">
+    </label>
+    <label>Result
+      <select name="result">
+        <option value="">全部</option>
+        {% for item in results %}
+        <option value="{{ item }}" {% if result == item %}selected{% endif %}>{{ item }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="date-field {% if is_today_range %}is-today{% endif %}">开始日期
+      <input type="date" name="dateFrom" value="{{ dateFrom }}">
+    </label>
+    <label class="date-field {% if is_today_range %}is-today{% endif %}">结束日期
+      <input type="date" name="dateTo" value="{{ dateTo }}">
+    </label>
+    <label>每页
+      <select name="pageSize">
+        {% for size in page_sizes %}
+        <option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="filter-actions">
+      <a class="btn ghost filter-reset" href="/">重置为当日</a>
+      <a class="btn ghost" href="/?all=1">全部历史</a>
+    </div>
+  </div>
+  {% if is_today_range %}
+  <p class="filter-hint">开始/结束日期已设为<strong>今天 {{ today }}</strong>。需要全部数据请点「全部历史」。</p>
+  {% elif not dateFrom and not dateTo %}
+  <p class="filter-hint">当前未限制日期（全部历史）。点「重置为当日」可只看今天。</p>
+  {% endif %}
+  {% if job_dropdown_capped %}
+  <p class="filter-hint">Job 下拉仅展示最近活跃的 {{ job_dropdown_limit }} 个；其余 Job 请用上方搜索。</p>
+  {% endif %}
+</form>
+
+<div class="result-head">
+  <div>
+    找到 <b>{{ total }}</b> 条构建记录
+    {% if is_today_range %}
+    <span class="scope-pill">当日 {{ today }}</span>
+    {% elif dateFrom or dateTo %}
+    <span class="result-sub">· {{ dateFrom or '…' }} ~ {{ dateTo or '…' }}</span>
+    {% else %}
+    <span class="scope-pill scope-pill-muted">全部历史</span>
+    {% endif %}
+    <span class="result-sub">· 每页 {{ page_size }} 条</span>
+  </div>
+  <div>第 {{ page }} / {{ total_pages }} 页{% if deep_page_capped %} <span class="result-sub">（深分页已限 {{ total_pages }} 页，请加筛选）</span>{% endif %}</div>
+</div>
+
+{% if total > 5000 and not job and not q and not branch and not dateFrom %}
+<div class="alert alert-warn" role="status">数据量较大（{{ total }} 条）。建议按 Job、时间范围筛选，可显著加快查询。</div>
+{% endif %}
+
+<form id="batch-delete-form" class="batch-form" method="post" action="/builds/batch-delete" autocomplete="off">
+  <section class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-check">
+              <label class="sr-only" for="select-all">全选</label>
+              <input type="checkbox" id="select-all" aria-label="全选当前页" {% if not admin_configured or not rows %}disabled{% endif %}>
+            </th>
+            <th>Job</th>
+            <th>Build</th>
+            <th>构建时间</th>
+            <th>Git Branch</th>
+            <th>Commit</th>
+            <th>Docker Image</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td class="col-check">
+              <input class="row-check" type="checkbox" name="ids" value="{{ row.id }}" aria-label="选择 {{ row.job_name }} #{{ row.build_id }}" {% if not admin_configured %}disabled{% endif %}>
+            </td>
+            <td><a class="job" href="/build/{{ row.id }}" title="查看构建详情">{{ row.job_name }}</a></td>
+            <td><a class="build-link" href="/build/{{ row.id }}" title="查看构建详情">#{{ row.build_id }}</a></td>
+            <td class="muted">{{ row.build_date }}</td>
+            <td><span class="pill branch">{{ row.git_branch or '—' }}</span></td>
+            <td><code title="{{ row.git_commit or '' }}">{{ (row.git_commit[:10] if row.git_commit else '—') }}</code></td>
+            <td><span class="docker" title="{{ row.docker_image_tag or '' }}">{{ row.docker_image_tag or '—' }}</span></td>
+            <td><span class="result {{ (row.build_result or 'UNKNOWN')|lower }}">{{ row.build_result or 'UNKNOWN' }}</span></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="empty">暂无构建记录。完成第一次 Jenkins 构建后，这里会自动出现数据。</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% if rows %}
+  <section class="admin-card" aria-labelledby="batch-delete-heading">
+    <h2 id="batch-delete-heading">批量删除</h2>
+    <p class="admin-help">勾选上方记录后，填写管理密码并输入确认词 <code>DELETE</code>。删除不可恢复。</p>
+    {% if not admin_configured %}
+    <div class="alert alert-warn" role="status">未配置 <code>ADMIN_PASSWORD</code>，批量删除不可用。</div>
+    {% endif %}
+    <div class="admin-fields">
+      <label for="batch-password">管理密码
+        <input id="batch-password" name="password" type="password" required autocomplete="current-password" spellcheck="false" {% if not admin_configured %}disabled{% endif %}>
+      </label>
+      <label for="batch-confirm">确认（输入 DELETE）
+        <input id="batch-confirm" name="confirm" type="text" required placeholder="DELETE" autocomplete="off" spellcheck="false" {% if not admin_configured %}disabled{% endif %}>
+      </label>
+    </div>
+    <button class="btn danger" type="submit" {% if not admin_configured %}disabled{% endif %}>删除所选记录</button>
+  </section>
+  {% endif %}
+</form>
+
+{% if total_pages > 1 %}
+<nav class="pagination" aria-label="分页">
+  {% set base = 'q=' ~ (q|urlencode) ~ '&job=' ~ (job|urlencode) ~ '&branch=' ~ (branch|urlencode) ~ '&result=' ~ (result|urlencode) ~ '&dateFrom=' ~ (dateFrom|urlencode) ~ '&dateTo=' ~ (dateTo|urlencode) ~ '&pageSize=' ~ page_size %}
+  {% if page > 1 %}
+  <a href="/?{{ base }}&page=1">首页</a>
+  <a href="/?{{ base }}&page={{ page-1 }}">← 上一页</a>
+  {% endif %}
+  <span>{{ page }} / {{ total_pages }}</span>
+  {% if page < total_pages %}
+  <a href="/?{{ base }}&page={{ page+1 }}">下一页 →</a>
+  <a href="/?{{ base }}&page={{ total_pages }}">末页</a>
+  {% endif %}
+</nav>
+{% endif %}
+
+<script>
+(function () {
+  var selectAll = document.getElementById('select-all');
+  if (!selectAll) return;
+  selectAll.addEventListener('change', function () {
+    document.querySelectorAll('.row-check').forEach(function (cb) {
+      if (!cb.disabled) cb.checked = selectAll.checked;
+    });
+  });
+})();
+</script>
+{% endblock %}
