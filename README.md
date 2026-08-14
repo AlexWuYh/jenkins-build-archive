@@ -1,17 +1,8 @@
 # Jenkins Build Archive
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](./Dockerfile)
-[![GitHub](https://img.shields.io/badge/GitHub-AlexWuYh%2Fjenkins-build-archive-181717?logo=github)](https://github.com/AlexWuYh/jenkins-build-archive)
-
 独立于 Jenkins 的**构建元数据归档服务**。在 Build Record 被清理后，仍可追溯 Git 分支 / Commit、Docker Image Tag / Digest 等信息。
 
-| | |
-|---|---|
-| **作者** | [AlexWuYh](https://github.com/AlexWuYh) |
-| **仓库** | https://github.com/AlexWuYh/jenkins-build-archive |
-| **许可** | [MIT](./LICENSE) |
-| **定位** | 内网使用；写接口 `API_TOKEN`，Web 管理 `ADMIN_PASSWORD` |
+面向**内网**使用：写接口使用 `API_TOKEN`，Web 管理使用 `ADMIN_PASSWORD`。
 
 ---
 
@@ -27,7 +18,7 @@
 8. [升级](#升级)
 9. [开发与测试](#开发与测试)
 10. [安全说明](#安全说明)
-11. [License](#license)
+11. [许可](#许可)
 
 ---
 
@@ -356,13 +347,6 @@ pytest -q
 
 ---
 
-## License
+## 许可
 
-本项目采用 [MIT License](./LICENSE)。
-
-```
-Copyright (c) 2026 AlexWuYh
-```
-
-- **Author:** [AlexWuYh](https://github.com/AlexWuYh)
-- **Repository:** https://github.com/AlexWuYh/jenkins-build-archive
+[MIT License](./LICENSE)
