@@ -10,6 +10,12 @@
  *   DOCKER_IMAGE_DIGEST
  *   DOCKER_REGISTRY
  *   DOCKER_REPOSITORY
+ *   commitMsg / COMMIT_MSG
+ *   commitAuthor / COMMIT_AUTHOR
+ *   commitId / COMMIT_ID  (defaults to GIT_COMMIT)
+ *   commitFiles / COMMIT_FILES  (List, JSON array string, or newline-separated)
+ *
+ * Or pass via buildArchive(commitMsg: '...', commitAuthor: '...', commitId: '...', commitFiles: [...])
  *
  * Security: URL/token are passed via env vars to curl; payload via temp file.
  * Archive failure must not change the Jenkins build result.
@@ -36,6 +42,26 @@ def call(Map config = [:]) {
         return
     }
 
+    def commitId = config.commitId ?: env.commitId ?: env.COMMIT_ID ?: env.GIT_COMMIT
+    def commitMsg = config.commitMsg ?: env.commitMsg ?: env.COMMIT_MSG
+    def commitAuthor = config.commitAuthor ?: env.commitAuthor ?: env.COMMIT_AUTHOR
+    def commitFiles = config.commitFiles ?: env.commitFiles ?: env.COMMIT_FILES
+    // Normalize stringy list env (newline / comma separated) into List when possible
+    if (commitFiles instanceof String) {
+        def text = commitFiles.trim()
+        if (text.startsWith('[')) {
+            try {
+                commitFiles = new groovy.json.JsonSlurper().parseText(text)
+            } catch (ignored) {
+                commitFiles = text.readLines().findAll { it?.trim() }
+            }
+        } else if (text) {
+            commitFiles = text.replace(',', '\n').readLines().collect { it.trim() }.findAll { it }
+        } else {
+            commitFiles = null
+        }
+    }
+
     def payload = [
         jobName: env.JOB_NAME,
         buildId: buildNumber as Integer,
@@ -43,6 +69,10 @@ def call(Map config = [:]) {
         gitRepository: env.GIT_URL ?: env.GIT_REPO,
         gitBranch: branch,
         gitCommit: env.GIT_COMMIT,
+        commitMsg: commitMsg,
+        commitAuthor: commitAuthor,
+        commitId: commitId,
+        commitFiles: commitFiles,
         dockerRegistry: env.DOCKER_REGISTRY,
         dockerRepository: env.DOCKER_REPOSITORY,
         dockerImageTag: imageTag,

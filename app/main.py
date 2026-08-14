@@ -1,3 +1,4 @@
+import json
 import os
 import secrets
 from datetime import datetime, timezone
@@ -100,7 +101,23 @@ def require_token(authorization: Optional[str], x_api_token: Optional[str]) -> N
         raise HTTPException(status_code=401, detail=err)
 
 
+def _parse_commit_files(raw) -> Optional[list]:
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    if not text:
+        return None
+    try:
+        data = json.loads(text)
+        if isinstance(data, list):
+            return [str(x) for x in data]
+    except json.JSONDecodeError:
+        pass
+    return [line.strip() for line in text.splitlines() if line.strip()] or None
+
+
 def row_to_dict(row):
+    keys = set(row.keys()) if hasattr(row, "keys") else set()
     return {
         "id": row["id"],
         "jobName": row["job_name"],
@@ -109,6 +126,12 @@ def row_to_dict(row):
         "gitRepository": row["git_repository"],
         "gitBranch": row["git_branch"],
         "gitCommit": row["git_commit"],
+        "commitMsg": row["commit_msg"] if "commit_msg" in keys else None,
+        "commitAuthor": row["commit_author"] if "commit_author" in keys else None,
+        "commitId": row["commit_id"] if "commit_id" in keys else None,
+        "commitFiles": _parse_commit_files(
+            row["commit_files"] if "commit_files" in keys else None
+        ),
         "dockerRegistry": row["docker_registry"],
         "dockerRepository": row["docker_repository"],
         "dockerImageTag": row["docker_image_tag"],
@@ -192,19 +215,25 @@ def create_or_update_build(
 ):
     require_token(authorization, x_api_token)
     now = utc_now_iso()
+    commit_files_json = payload.commit_files_json()
     with get_db() as db:
         db.execute(
             """
             INSERT INTO build_records (
                 job_name, build_id, build_date, git_repository, git_branch, git_commit,
+                commit_msg, commit_author, commit_id, commit_files,
                 docker_registry, docker_repository, docker_image_tag, docker_image_digest,
                 build_result, build_url, duration_ms, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(job_name, build_id) DO UPDATE SET
                 build_date=excluded.build_date,
                 git_repository=excluded.git_repository,
                 git_branch=excluded.git_branch,
                 git_commit=excluded.git_commit,
+                commit_msg=excluded.commit_msg,
+                commit_author=excluded.commit_author,
+                commit_id=excluded.commit_id,
+                commit_files=excluded.commit_files,
                 docker_registry=excluded.docker_registry,
                 docker_repository=excluded.docker_repository,
                 docker_image_tag=excluded.docker_image_tag,
@@ -221,6 +250,10 @@ def create_or_update_build(
                 payload.gitRepository,
                 payload.gitBranch,
                 payload.gitCommit,
+                payload.commitMsg,
+                payload.commitAuthor,
+                payload.commitId,
+                commit_files_json,
                 payload.dockerRegistry,
                 payload.dockerRepository,
                 payload.dockerImageTag,
@@ -343,11 +376,16 @@ def _detail_response(
     error: Optional[str] = None,
     status_code: int = 200,
 ):
+    keys = set(row.keys()) if hasattr(row, "keys") else set()
+    commit_files = _parse_commit_files(
+        row["commit_files"] if "commit_files" in keys else None
+    )
     return templates.TemplateResponse(
         "detail.html",
         {
             "request": request,
             "row": row,
+            "commit_files": commit_files,
             "error": error,
             "admin_configured": admin_password_configured(),
         },

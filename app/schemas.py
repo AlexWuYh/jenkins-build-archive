@@ -1,4 +1,5 @@
-from typing import Optional
+import json
+from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -10,6 +11,11 @@ class BuildRecordIn(BaseModel):
     gitRepository: Optional[str] = Field(default=None, max_length=1000)
     gitBranch: Optional[str] = Field(default=None, max_length=1000)
     gitCommit: Optional[str] = Field(default=None, max_length=200)
+    commitMsg: Optional[str] = Field(default=None, max_length=8000)
+    commitAuthor: Optional[str] = Field(default=None, max_length=500)
+    commitId: Optional[str] = Field(default=None, max_length=200)
+    # list of paths, or a single string / newline-joined text from Jenkins
+    commitFiles: Optional[Union[List[str], str]] = None
     dockerRegistry: Optional[str] = Field(default=None, max_length=500)
     dockerRepository: Optional[str] = Field(default=None, max_length=1000)
     dockerImageTag: Optional[str] = Field(default=None, max_length=1000)
@@ -30,6 +36,40 @@ class BuildRecordIn(BaseModel):
         if not (lower.startswith("http://") or lower.startswith("https://")):
             raise ValueError("buildUrl must start with http:// or https://")
         return stripped
+
+    @field_validator("commitFiles", mode="before")
+    @classmethod
+    def normalize_commit_files(cls, value: Any) -> Optional[List[str]]:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return None
+            # JSON array string
+            if text.startswith("["):
+                try:
+                    parsed = json.loads(text)
+                    if isinstance(parsed, list):
+                        return [str(x).strip() for x in parsed if str(x).strip()]
+                except json.JSONDecodeError:
+                    pass
+            # newline or comma separated
+            parts = []
+            for line in text.replace(",", "\n").splitlines():
+                item = line.strip()
+                if item:
+                    parts.append(item)
+            return parts or None
+        if isinstance(value, list):
+            parts = [str(x).strip() for x in value if str(x).strip()]
+            return parts or None
+        return [str(value).strip()] if str(value).strip() else None
+
+    def commit_files_json(self) -> Optional[str]:
+        if not self.commitFiles:
+            return None
+        return json.dumps(self.commitFiles, ensure_ascii=False)
 
 
 class BuildRecordOut(BuildRecordIn):

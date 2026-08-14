@@ -46,6 +46,10 @@ def init_db() -> None:
                 git_repository TEXT,
                 git_branch TEXT,
                 git_commit TEXT,
+                commit_msg TEXT,
+                commit_author TEXT,
+                commit_id TEXT,
+                commit_files TEXT,
                 docker_registry TEXT,
                 docker_repository TEXT,
                 docker_image_tag TEXT,
@@ -85,6 +89,23 @@ def init_db() -> None:
             );
             """
         )
+        _ensure_build_record_columns(db)
+
+
+def _ensure_build_record_columns(db) -> None:
+    """Idempotent migrations for existing SQLite files."""
+    existing = {
+        row[1] for row in db.execute("PRAGMA table_info(build_records)").fetchall()
+    }
+    additions = [
+        ("commit_msg", "TEXT"),
+        ("commit_author", "TEXT"),
+        ("commit_id", "TEXT"),
+        ("commit_files", "TEXT"),  # JSON array of file paths
+    ]
+    for name, col_type in additions:
+        if name not in existing:
+            db.execute(f"ALTER TABLE build_records ADD COLUMN {name} {col_type}")
 
 
 def get_setting(db, key: str) -> str | None:
