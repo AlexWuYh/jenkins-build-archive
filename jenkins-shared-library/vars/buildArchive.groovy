@@ -42,7 +42,21 @@ def call(Map config = [:]) {
         return
     }
 
-    def commitId = config.commitId ?: env.commitId ?: env.COMMIT_ID ?: env.GIT_COMMIT
+    // Treat "-" / empty placeholders as missing (common when GIT_COMMIT unset).
+    def cleanCommit = { v ->
+        def s = (v == null) ? '' : v.toString().trim()
+        if (!s) {
+            return null
+        }
+        def lower = s.toLowerCase()
+        if (lower in ['-', '—', '–', '.', 'n/a', 'na', 'null', 'none', 'unknown', 'undefined']) {
+            return null
+        }
+        return s
+    }
+
+    def commitId = cleanCommit(config.commitId ?: env.commitId ?: env.COMMIT_ID ?: env.GIT_COMMIT)
+    def gitCommit = cleanCommit(env.GIT_COMMIT) ?: commitId
     def commitMsg = config.commitMsg ?: env.commitMsg ?: env.COMMIT_MSG
     def commitAuthor = config.commitAuthor ?: env.commitAuthor ?: env.COMMIT_AUTHOR
     def commitFiles = config.commitFiles ?: env.commitFiles ?: env.COMMIT_FILES
@@ -68,10 +82,10 @@ def call(Map config = [:]) {
         buildDate: env.BUILD_TIMESTAMP ?: new Date().format("yyyy-MM-dd'T'HH:mm:ssXXX", TimeZone.getTimeZone('Asia/Shanghai')),
         gitRepository: env.GIT_URL ?: env.GIT_REPO,
         gitBranch: branch,
-        gitCommit: env.GIT_COMMIT,
+        gitCommit: gitCommit,
         commitMsg: commitMsg,
         commitAuthor: commitAuthor,
-        commitId: commitId,
+        commitId: commitId ?: gitCommit,
         commitFiles: commitFiles,
         dockerRegistry: env.DOCKER_REGISTRY,
         dockerRepository: env.DOCKER_REPOSITORY,

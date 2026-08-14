@@ -116,17 +116,44 @@ def _parse_commit_files(raw) -> Optional[list]:
     return [line.strip() for line in text.splitlines() if line.strip()] or None
 
 
+# Jenkins / scripts often send "-" or similar when GIT_COMMIT is unset.
+_COMMIT_PLACEHOLDERS = frozenset(
+    {"-", "—", "–", ".", "n/a", "na", "null", "none", "unknown", "undefined"}
+)
+
+
+def _clean_commit_value(value: Optional[str]) -> Optional[str]:
+    """Strip and treat empty / placeholder tokens as missing."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if text.lower() in _COMMIT_PLACEHOLDERS:
+        return None
+    return text
+
+
 def _normalize_commit_pair(
     git_commit: Optional[str], commit_id: Optional[str]
 ) -> tuple[Optional[str], Optional[str]]:
-    """Prefer non-empty values; fill either side from the other when missing."""
-    gc = (git_commit or "").strip() or None
-    cid = (commit_id or "").strip() or None
+    """Prefer real SHAs; fill either side from the other when missing/placeholder."""
+    gc = _clean_commit_value(git_commit)
+    cid = _clean_commit_value(commit_id)
     if not gc and cid:
         gc = cid
     if not cid and gc:
         cid = gc
     return gc, cid
+
+
+def _row_for_ui(row):
+    """sqlite Row → dict with commit fields normalized for list/detail templates."""
+    d = {k: row[k] for k in row.keys()}
+    gc, cid = _normalize_commit_pair(d.get("git_commit"), d.get("commit_id"))
+    d["git_commit"] = gc
+    d["commit_id"] = cid
+    return d
 
 
 def row_to_dict(row):
@@ -403,11 +430,12 @@ def _detail_response(
     )
     # Single display value for Git card (avoid empty when only commitId was pushed).
     commit_sha = git_commit or commit_id
+    ui_row = _row_for_ui(row)
     return templates.TemplateResponse(
         "detail.html",
         {
             "request": request,
-            "row": row,
+            "row": ui_row,
             "commit_sha": commit_sha,
             "commit_files": commit_files,
             "error": error,
@@ -463,7 +491,7 @@ def _index_context(
     is_today_range = bool(dateFrom and dateTo and dateFrom == dateTo == today)
     return {
         "request": request,
-        "rows": rows,
+        "rows": [_row_for_ui(r) for r in rows],
         "jobs": jobs,
         "job_dropdown_limit": JOB_DROPDOWN_LIMIT,
         "job_dropdown_capped": stats_data["jobs"] > JOB_DROPDOWN_LIMIT,
