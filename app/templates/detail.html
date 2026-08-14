@@ -55,6 +55,30 @@
   </section>
 
   <section class="info-card wide">
+    <h2>Commit 详情</h2>
+    <dl>
+      <dt>commitId</dt>
+      <dd><code class="full">{{ row['commit_id'] or '—' }}</code></dd>
+      <dt>commitAuthor</dt>
+      <dd>{{ row['commit_author'] or '—' }}</dd>
+      <dt>commitMsg</dt>
+      <dd class="commit-msg">{{ row['commit_msg'] or '—' }}</dd>
+      <dt>commitFiles</dt>
+      <dd>
+        {% if commit_files %}
+        <ul class="file-list">
+          {% for f in commit_files %}
+          <li><code>{{ f }}</code></li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        —
+        {% endif %}
+      </dd>
+    </dl>
+  </section>
+
+  <section class="info-card wide">
     <h2>Docker 镜像</h2>
     <dl>
       <dt>Registry</dt><dd>{{ row.docker_registry or '—' }}</dd>

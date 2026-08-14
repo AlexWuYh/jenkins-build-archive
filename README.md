@@ -160,6 +160,10 @@ pipeline {
 | gitRepository | `GIT_URL` / `GIT_REPO` |
 | gitBranch | `GIT_BRANCH` / `BRANCH_NAME` |
 | gitCommit | `GIT_COMMIT` |
+| commitMsg | `commitMsg` / `COMMIT_MSG` 或 `buildArchive(commitMsg: …)` |
+| commitAuthor | `commitAuthor` / `COMMIT_AUTHOR` 或 call 参数 |
+| commitId | `commitId` / `COMMIT_ID`（默认回退 `GIT_COMMIT`） |
+| commitFiles | `commitFiles` / `COMMIT_FILES`（List / JSON 数组字符串 / 换行分隔） |
 | dockerRegistry / Repository / Tag / Digest | `DOCKER_*` 或 `DockerImageTag` |
 | buildResult | `currentBuild.currentResult` |
 | buildUrl | `BUILD_URL` |
@@ -183,6 +187,29 @@ stage('Push image') {
 }
 post { always { buildArchive() } }
 ```
+
+### 附带 Commit 详情示例
+
+```groovy
+stage('Collect commit') {
+    steps {
+        script {
+            env.commitId = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+            env.commitAuthor = sh(script: 'git log -1 --pretty=format:%an', returnStdout: true).trim()
+            env.commitMsg = sh(script: 'git log -1 --pretty=format:%B', returnStdout: true).trim()
+            env.commitFiles = sh(script: 'git diff-tree --no-commit-id --name-only -r HEAD', returnStdout: true).trim()
+        }
+    }
+}
+post {
+    always {
+        buildArchive()
+        // 或：buildArchive(commitMsg: env.commitMsg, commitAuthor: env.commitAuthor, commitId: env.commitId, commitFiles: env.commitFiles.readLines())
+    }
+}
+```
+
+详情页会展示 `commitMsg` / `commitAuthor` / `commitId` / `commitFiles`。
 
 ### 不使用 Shared Library（curl）
 

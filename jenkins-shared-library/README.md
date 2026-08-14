@@ -40,11 +40,14 @@ pipeline {
 }
 ```
 
-Optional Docker-related env (set in stages before `post`):
+Optional env (set in stages before `post`):
 
 - `DOCKER_REGISTRY` / `DOCKER_REPOSITORY`
 - `DOCKER_IMAGE_TAG` or `DockerImageTag`
 - `DOCKER_IMAGE_DIGEST`
+- `commitMsg` / `COMMIT_MSG`, `commitAuthor` / `COMMIT_AUTHOR`
+- `commitId` / `COMMIT_ID` (defaults to `GIT_COMMIT`)
+- `commitFiles` / `COMMIT_FILES` (list, JSON array string, or newline-separated paths)
 
 Archive failure only logs a warning; it does **not** change the build result.
 

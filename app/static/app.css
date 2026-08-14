@@ -860,6 +860,33 @@ a.btn.danger:hover {
   border-radius: 6px;
 }
 
+.commit-msg {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.55;
+}
+
+.file-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.file-list li code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: #f8fafc;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  word-break: break-all;
+}
+
 .actions {
   padding: 20px 0 24px;
   display: flex;

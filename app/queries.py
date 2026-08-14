@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 # Columns needed by list UI / API list payload (detail still uses SELECT *).
 LIST_COLUMNS = (
     "id, job_name, build_id, build_date, git_repository, git_branch, git_commit, "
+    "commit_msg, commit_author, commit_id, commit_files, "
     "docker_registry, docker_repository, docker_image_tag, docker_image_digest, "
     "build_result, build_url, duration_ms, created_at, updated_at"
 )
