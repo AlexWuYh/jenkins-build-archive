@@ -4,38 +4,48 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Jenkins Build Archive{% endblock %}</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/favicon.svg">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="container topbar-inner">
-    <a class="brand" href="/">Jenkins <span>Build Archive</span></a>
-    <nav class="top-nav" aria-label="主导航">
-      <a href="/" class="nav-link {% if request.url.path == '/' or request.url.path.startswith('/build') %}is-active{% endif %}">构建列表</a>
-      <a href="/admin" class="nav-link {% if request.url.path.startswith('/admin') %}is-active{% endif %}">管理</a>
-      <div class="status" title="服务在线"><i aria-hidden="true"></i> Archive Online</div>
-    </nav>
-  </div>
-</header>
-
-<main class="container">
-  {% block content %}{% endblock %}
-</main>
-
-<footer class="site-footer">
-  <div class="container footer-inner">
-    <div class="footer-brand">
-      <strong>Jenkins Build Archive</strong>
-      <span>独立构建元数据归档</span>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/">
+        <img class="brand-icon" src="/static/favicon.svg" width="28" height="28" alt="">
+        <span class="brand-text">Jenkins <span>Build Archive</span></span>
+      </a>
+      <nav class="top-nav" aria-label="主导航">
+        <a href="/" class="nav-link {% if request.url.path == '/' or request.url.path.startswith('/build') %}is-active{% endif %}">构建列表</a>
+        <a href="/admin" class="nav-link {% if request.url.path.startswith('/admin') %}is-active{% endif %}">管理</a>
+        <div class="status" title="服务在线"><i aria-hidden="true"></i> Archive Online</div>
+      </nav>
     </div>
-    <div class="footer-meta">
-      <span>Author <a class="footer-link" href="https://github.com/AlexWuYh" target="_blank" rel="noopener">AlexWuYh</a></span>
-      <span class="footer-sep" aria-hidden="true">·</span>
-      <a class="footer-link" href="https://github.com/AlexWuYh/jenkins-build-archive" target="_blank" rel="noopener">GitHub</a>
-      <span class="footer-sep" aria-hidden="true">·</span>
-      <a class="footer-link" href="https://github.com/AlexWuYh/jenkins-build-archive/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+  </header>
+
+  <main class="container main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img class="footer-icon" src="/static/favicon.svg" width="22" height="22" alt="">
+        <div>
+          <strong>Jenkins Build Archive</strong>
+          <span>独立构建元数据归档</span>
+        </div>
+      </div>
+      <div class="footer-meta">
+        <span>Author <a class="footer-link" href="https://github.com/AlexWuYh" target="_blank" rel="noopener">AlexWuYh</a></span>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <a class="footer-link" href="https://github.com/AlexWuYh/jenkins-build-archive" target="_blank" rel="noopener">GitHub</a>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <a class="footer-link" href="https://github.com/AlexWuYh/jenkins-build-archive/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </div>
     </div>
-  </div>
-</footer>
+  </footer>
+</div>
 </body>
 </html>

@@ -38,15 +38,32 @@
 
 html {
   -webkit-font-smoothing: antialiased;
+  height: 100%;
 }
 
 body {
   margin: 0;
+  min-height: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font);
   color: var(--ink);
   background: var(--bg);
   line-height: 1.5;
+}
+
+/* Sticky footer: content grows, footer sits at viewport bottom when short */
+.app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1 0 auto;
+  width: min(1380px, calc(100% - 40px));
+  padding-bottom: 8px;
 }
 
 /* Content links use brand blue; brand/nav/buttons keep their own styles */
@@ -82,14 +99,30 @@ a:not(.btn):not(.brand):not(.nav-link):hover {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-weight: 800;
   font-size: 18px;
   color: var(--ink-strong);
   text-decoration: none;
   letter-spacing: -0.02em;
+  min-width: 0;
 }
 
-.brand span {
+.brand:hover {
+  color: var(--ink-strong);
+}
+
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex: 0 0 auto;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+.brand-text span {
   font-weight: 500;
   color: var(--muted);
 }
@@ -978,10 +1011,11 @@ a.btn.danger:hover {
 }
 
 .site-footer {
-  margin-top: 24px;
-  padding: 22px 0 32px;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 18px 0 22px;
   border-top: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.55);
+  background: #fff;
 }
 
 .footer-inner {
@@ -994,8 +1028,21 @@ a.btn.danger:hover {
 
 .footer-brand {
   display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-brand > div {
+  display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.footer-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  flex: 0 0 auto;
 }
 
 .footer-brand strong {
@@ -1077,8 +1124,13 @@ select:focus-visible {
 }
 
 @media (max-width: 650px) {
-  .container {
+  .container,
+  .main-content {
     width: min(100% - 24px, 1380px);
+  }
+
+  .brand-text {
+    font-size: 15px;
   }
 
   .topbar-inner {

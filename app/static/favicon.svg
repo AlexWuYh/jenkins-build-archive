@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Build Archive">
+  <defs>
+    <linearGradient id="bg" x1="12" y1="4" x2="52" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1e293b"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="18" y1="22" x2="46" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <!-- App tile -->
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Soft highlight -->
+  <path d="M14 8h36a6 6 0 0 1 6 6v8H8v-8a6 6 0 0 1 6-6z" fill="#ffffff" opacity=".06"/>
+  <!-- Archive box body -->
+  <path d="M18 24.5 32 17l14 7.5v17L32 49 18 41.5v-17z" fill="url(#accent)"/>
+  <!-- Box top lid -->
+  <path d="M18 24.5 32 32l14-7.5L32 17 18 24.5z" fill="#93c5fd"/>
+  <!-- Center seam -->
+  <path d="M32 32v17" stroke="#1e3a8a" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
+  <!-- History lines (build records) -->
+  <path d="M24 36.5h7.5M24 40h5.5" stroke="#eff6ff" stroke-width="2" stroke-linecap="round" opacity=".95"/>
+  <!-- Small status dot -->
+  <circle cx="46.5" cy="18.5" r="4.2" fill="#22c55e"/>
+  <circle cx="46.5" cy="18.5" r="2.1" fill="#bbf7d0"/>
+</svg>
