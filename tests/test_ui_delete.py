@@ -28,13 +28,24 @@ def test_ui_delete_success(client, auth_headers, admin_password):
         follow_redirects=False,
     )
     assert r.status_code == 303
-    assert "notice=deleted" in r.headers["location"]
+    assert r.headers["location"] in ("/", "http://testserver/")
+    # flash is one-shot cookie, not sticky query params
+    assert "notice=" not in r.headers.get("location", "")
+    assert "jba_flash" in r.cookies or "set-cookie" in {
+        k.lower() for k in r.headers.keys()
+    } or any("jba_flash" in v for v in r.headers.getlist("set-cookie"))
+
     assert client.get(f"/api/v1/builds/{created['id']}").status_code == 404
 
-    home = client.get(r.headers["location"])
+    # first visit after redirect shows flash
+    home = client.get("/")
     assert home.status_code == 200
     assert "已删除构建记录" in home.text
     assert "demo-job" in home.text
+
+    # second visit: flash must not stick
+    home2 = client.get("/")
+    assert "已删除构建记录" not in home2.text
 
 
 def test_ui_delete_requires_confirm_word(client, auth_headers, admin_password):
@@ -93,10 +104,15 @@ def test_batch_delete(client, auth_headers, admin_password):
         follow_redirects=False,
     )
     assert r.status_code == 303
-    assert "batch-deleted" in r.headers["location"]
+    assert "notice=" not in r.headers.get("location", "")
     assert client.get(f"/api/v1/builds/{ids[0]}").status_code == 404
     assert client.get(f"/api/v1/builds/{ids[1]}").status_code == 200
     assert client.get(f"/api/v1/builds/{ids[2]}").status_code == 404
+
+    home = client.get("/")
+    assert "已批量删除" in home.text
+    home2 = client.get("/")
+    assert "已批量删除" not in home2.text
 
 
 def test_batch_delete_requires_selection(client, auth_headers, admin_password):

@@ -36,11 +36,17 @@ def test_save_retention_and_run(client, auth_headers, admin_password):
         follow_redirects=False,
     )
     assert r.status_code == 303
-    assert "retention-run" in r.headers["location"]
+    assert r.headers["location"].rstrip("/").endswith("/admin") or r.headers["location"] == "/admin"
+    assert "notice=" not in r.headers["location"]
 
     listed = client.get("/api/v1/builds").json()
     assert listed["total"] == 1
     assert listed["items"][0]["jobName"] == "new-job"
+
+    admin = client.get("/admin")
+    assert "保留策略已执行" in admin.text
+    admin2 = client.get("/admin")
+    assert "保留策略已执行" not in admin2.text
 
     # config persists
     cfg = client.get("/api/v1/admin/retention", headers=auth_headers).json()
