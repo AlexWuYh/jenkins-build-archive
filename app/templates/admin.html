@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}管理 · 保留策略{% endblock %}
+{% block content %}
+
+<div class="back"><a href="/">← 返回构建列表</a></div>
+
+<section class="hero">
+  <div>
+    <div class="eyebrow">ADMIN</div>
+    <h1>数据保留策略</h1>
+    <p>配置最长保留期限：例如 365 天，则自动清理更早的构建记录。网页配置保存在数据库中，优先于环境变量。</p>
+  </div>
+</section>
+
+{% if flash %}
+<div class="alert alert-success" role="status">{{ flash }}</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-error" role="alert">{{ error }}</div>
+{% endif %}
+
+<section class="info-card admin-config-card" aria-labelledby="retention-heading">
+  <div class="admin-config-head">
+    <div>
+      <h2 id="retention-heading">最长保留期限</h2>
+      <p class="admin-help">
+        <strong>最长保留天数</strong>：只保留该天数以内的数据（按 <code>build_date</code>）。填 <code>0</code> 表示不按天数清理。<br>
+        <strong>每 Job 最大条数</strong>：每个 Job 仅保留最新 N 条。填 <code>0</code> 表示不限制条数。
+      </p>
+    </div>
+    <div class="config-chips" aria-label="当前生效配置">
+      <div class="config-chip"><span>天数</span><strong>{{ retention.days }}</strong></div>
+      <div class="config-chip"><span>每 Job</span><strong>{{ retention.max_per_job }}</strong></div>
+      <div class="config-chip"><span>来源</span><strong>{{ retention.source }}</strong></div>
+    </div>
+  </div>
+
+  {% if not admin_configured %}
+  <div class="alert alert-warn" role="status">未配置 <code>ADMIN_PASSWORD</code>，无法在此修改策略。请在 <code>.env</code> 中设置管理密码后重启服务。</div>
+  {% endif %}
+
+  <form method="post" action="/admin/retention" autocomplete="off">
+    <div class="admin-fields admin-fields-3">
+      <label for="retention-days">最长保留天数
+        <input id="retention-days" name="retention_days" type="number" min="0" max="36500" step="1" value="{{ retention.days }}" required {% if not admin_configured %}disabled{% endif %}>
+      </label>
+      <label for="retention-max">每 Job 最大条数
+        <input id="retention-max" name="retention_max_per_job" type="number" min="0" max="1000000" step="1" value="{{ retention.max_per_job }}" required {% if not admin_configured %}disabled{% endif %}>
+      </label>
+      <label for="admin-password">管理密码
+        <input id="admin-password" name="password" type="password" required autocomplete="current-password" spellcheck="false" {% if not admin_configured %}disabled{% endif %}>
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="submit" name="action" value="save" {% if not admin_configured %}disabled{% endif %}>保存配置</button>
+      <button class="btn danger" type="submit" name="action" value="save_and_run" {% if not admin_configured %}disabled{% endif %}>保存并立即清理</button>
+    </div>
+  </form>
+</section>
+
+<section class="info-card admin-note">
+  <h2>说明</h2>
+  <ul class="plain-list">
+    <li>服务启动时若策略已启用，会自动执行一次清理。</li>
+    <li>Jenkins 写入仍使用 <code>API_TOKEN</code>；页面管理（删除 / 保留策略）使用 <code>ADMIN_PASSWORD</code>。</li>
+    <li>清理不可恢复，变更前建议备份 <code>data/build_archive.db</code>。</li>
+  </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,23 @@
+services:
+  jenkins-build-archive:
+    build: .
+    container_name: jenkins-build-archive
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      APP_NAME: "Jenkins Build Archive"
+      DATABASE_PATH: "/data/build_archive.db"
+      API_TOKEN: "${API_TOKEN:-change-me-please}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-change-me-please}"
+      TZ: "${TZ:-Asia/Shanghai}"
+      RETENTION_DAYS: "${RETENTION_DAYS:-0}"
+      RETENTION_MAX_PER_JOB: "${RETENTION_MAX_PER_JOB:-0}"
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8080/health\", timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

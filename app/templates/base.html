@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Jenkins Build Archive{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <a class="brand" href="/">Jenkins <span>Build Archive</span></a>
+    <nav class="top-nav" aria-label="主导航">
+      <a href="/" class="nav-link {% if request.url.path == '/' or request.url.path.startswith('/build') %}is-active{% endif %}">构建列表</a>
+      <a href="/admin" class="nav-link {% if request.url.path.startswith('/admin') %}is-active{% endif %}">管理</a>
+      <div class="status" title="服务在线"><i aria-hidden="true"></i> Archive Online</div>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="container footer">Jenkins Build Archive · Independent build history</footer>
+</body>
+</html>
