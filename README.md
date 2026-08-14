@@ -4,6 +4,8 @@
 
 面向**内网**使用：写接口使用 `API_TOKEN`，Web 管理使用 `ADMIN_PASSWORD`。
 
+![Web UI 截图](docs/images/web-ui.png)
+
 ---
 
 ## 目录
