@@ -1,6 +1,6 @@
 # Jenkins Shared Library
 
-完整的 Jenkinsfile 示例、字段说明与排错见仓库根目录 [README.md §3](../README.md#3-jenkins-接入与-jenkinsfile-编写)。
+完整的 Jenkinsfile 示例、字段说明与排错见仓库根目录 [README.md — Jenkins 接入与 Jenkinsfile](../README.md#jenkins-接入与-jenkinsfile)。
 
 ## 1. Configure global variables
 

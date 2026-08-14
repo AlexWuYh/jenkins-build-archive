@@ -2,7 +2,7 @@
 
 ## 当前阶段
 
-**M7 — 大数据量列表性能与展示**：done  
+**M8 — Commit 详情字段**：done  
 
 下一阶段见「后续（planned）」。
 
@@ -126,6 +126,29 @@
   - [x] pageSize 生效
   - [x] 特殊字符搜索不报错
   - [x] pytest 通过
+
+---
+
+## M8 — Commit 详情字段
+
+- **状态**：done
+- **目标**：归档并展示 Jenkins 推送的 commitMsg / commitAuthor / commitId / commitFiles
+- **范围**：
+  - DB 列 + 幂等迁移；API camelCase 入参
+  - 详情页「Commit 详情」卡片
+  - Shared Library 采集 env / call 参数
+  - README / `.ai` 文档同步
+- **验收**：
+  - [x] POST 可写入并 GET 回读
+  - [x] 详情页展示 message/author/id/files
+  - [x] 列表兼容旧库无列（迁移后可用）
+  - [x] pytest 覆盖
+
+### 同期已落地（文档对齐，不单列里程碑）
+
+- Web 列表默认当日；`/?all=1` 全部历史
+- 删除/保留策略成功提示用 Cookie 闪现（非 URL notice）
+- 页脚作者/GitHub/MIT；favicon；README 截图
 
 ---
 

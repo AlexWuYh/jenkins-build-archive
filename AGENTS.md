@@ -7,7 +7,7 @@
 
 - **名称**：Jenkins Build Archive
 - **一句话**：独立于 Jenkins 的构建元数据归档服务，解决 Build Record 清理后无法追溯 Git/Docker 信息的问题
-- **当前里程碑**：M0–M7 均已完成；后续见 `.ai/MILESTONES.md`「planned」
+- **当前里程碑**：M0–M8 均已完成（含 Commit 详情字段）；后续见 `.ai/MILESTONES.md`「planned」
 - **部署假设**：内网使用；读接口默认开放；Jenkins 写用 `API_TOKEN`；Web 管理用 `ADMIN_PASSWORD`
 
 ## 必读文档
@@ -39,7 +39,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8080
 pytest -q
 
 # Docker
-cp .env.example .env   # 修改 API_TOKEN
+cp .env.example .env   # 修改 API_TOKEN 与 ADMIN_PASSWORD
 docker compose up -d --build
 curl http://127.0.0.1:8080/health
 ```

@@ -28,7 +28,8 @@
 
 - **归档写入**：Jenkins HTTP API / Shared Library；`(jobName, buildId)` 幂等
 - **查询展示**：Web UI + REST；Job / 分支 / Commit / Tag 搜索与筛选
-- **默认当日**：列表页日期默认当天（`TZ`）；支持「全部历史」
+- **Commit 详情**：`commitMsg` / `commitAuthor` / `commitId` / `commitFiles`（详情页）
+- **默认当日**：列表页开始/结束日期默认当天（`TZ`）；「全部历史」=`/?all=1`
 - **管理能力**：管理密码删除 / 批量删除；最长保留天数等策略
 - **运维友好**：Docker Compose、健康检查、归档失败不影响 Jenkins 结果
 
@@ -301,11 +302,43 @@ Tag 可被覆盖，长期追溯请同时记录 Digest。服务**不会**主动�
 | GET | `/health` | 无 | 健康检查 |
 | GET | `/api/v1/stats` | 无 | 统计 |
 | GET | `/api/v1/builds` | 无 | 列表（`q/job/branch/result/dateFrom/dateTo/page/pageSize`） |
-| GET | `/api/v1/builds/{id}` | 无 | 详情 |
+| GET | `/api/v1/builds/{id}` | 无 | 详情（含 commit*） |
 | POST | `/api/v1/builds` | Bearer Token | 创建/更新（幂等） |
 | DELETE | `/api/v1/builds/{id}` | Bearer Token | 删除 |
 | GET | `/api/v1/admin/retention` | Bearer Token | 保留配置 |
 | POST | `/api/v1/admin/retention/run` | Bearer Token | 执行清理 |
+
+### POST 正文（camelCase）
+
+```json
+{
+  "jobName": "k8s-monitor-uat",
+  "buildId": 1813,
+  "buildDate": "2026-08-14T11:58:51+08:00",
+  "gitRepository": "https://git.example.com/demo.git",
+  "gitBranch": "origin/main",
+  "gitCommit": "d948e59f",
+  "commitMsg": "feat: refactor event process",
+  "commitAuthor": "Alice <alice@example.com>",
+  "commitId": "d948e59faf9d9b5fee4902a4ee81349f843792b4",
+  "commitFiles": ["src/a.java", "pom.xml"],
+  "dockerRegistry": "172.27.15.33",
+  "dockerRepository": "dev/k8s-monitor-uat",
+  "dockerImageTag": "172.27.15.33/dev/k8s-monitor-uat:1813",
+  "dockerImageDigest": "sha256:…",
+  "buildResult": "SUCCESS",
+  "buildUrl": "https://jenkins.example.com/job/k8s-monitor-uat/1813/",
+  "durationMs": 185000
+}
+```
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `jobName`, `buildId`, `buildDate` | 是 | 幂等键 + 构建时间 |
+| `gitRepository`, `gitBranch`, `gitCommit` | 否 | 基础 Git |
+| `commitMsg`, `commitAuthor`, `commitId` | 否 | Commit 详情（详情页展示） |
+| `commitFiles` | 否 | `string[]`，或换行/JSON 数组字符串 |
+| `docker*` / `buildResult` / `buildUrl` / `durationMs` | 否 | 镜像与结果；`buildUrl` 仅 `http(s)://` |
 
 - `dateFrom` / `dateTo`：ISO 或 `YYYY-MM-DD`（按整天）
 - `pageSize`：1–100（UI 常用 20/50/100）
