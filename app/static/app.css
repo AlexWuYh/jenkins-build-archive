@@ -977,7 +977,64 @@ a.btn.danger:hover {
   border-radius: 4px;
 }
 
+.site-footer {
+  margin-top: 24px;
+  padding: 22px 0 32px;
+  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.footer-brand strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.footer-brand span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.footer-link {
+  color: var(--link);
+  text-decoration: none;
+  font-weight: 650;
+}
+
+.footer-link:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+.footer-sep {
+  opacity: 0.5;
+}
+
 .footer {
+  /* legacy class unused */
   padding: 25px 0 35px;
   color: #94a3b8;
   font-size: 12px;
