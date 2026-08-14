@@ -116,8 +116,24 @@ def _parse_commit_files(raw) -> Optional[list]:
     return [line.strip() for line in text.splitlines() if line.strip()] or None
 
 
+def _normalize_commit_pair(
+    git_commit: Optional[str], commit_id: Optional[str]
+) -> tuple[Optional[str], Optional[str]]:
+    """Prefer non-empty values; fill either side from the other when missing."""
+    gc = (git_commit or "").strip() or None
+    cid = (commit_id or "").strip() or None
+    if not gc and cid:
+        gc = cid
+    if not cid and gc:
+        cid = gc
+    return gc, cid
+
+
 def row_to_dict(row):
     keys = set(row.keys()) if hasattr(row, "keys") else set()
+    git_commit = row["git_commit"]
+    commit_id = row["commit_id"] if "commit_id" in keys else None
+    git_commit, commit_id = _normalize_commit_pair(git_commit, commit_id)
     return {
         "id": row["id"],
         "jobName": row["job_name"],
@@ -125,10 +141,10 @@ def row_to_dict(row):
         "buildDate": row["build_date"],
         "gitRepository": row["git_repository"],
         "gitBranch": row["git_branch"],
-        "gitCommit": row["git_commit"],
+        "gitCommit": git_commit,
         "commitMsg": row["commit_msg"] if "commit_msg" in keys else None,
         "commitAuthor": row["commit_author"] if "commit_author" in keys else None,
-        "commitId": row["commit_id"] if "commit_id" in keys else None,
+        "commitId": commit_id,
         "commitFiles": _parse_commit_files(
             row["commit_files"] if "commit_files" in keys else None
         ),
@@ -216,6 +232,7 @@ def create_or_update_build(
     require_token(authorization, x_api_token)
     now = utc_now_iso()
     commit_files_json = payload.commit_files_json()
+    git_commit, commit_id = _normalize_commit_pair(payload.gitCommit, payload.commitId)
     with get_db() as db:
         db.execute(
             """
@@ -249,10 +266,10 @@ def create_or_update_build(
                 payload.buildDate,
                 payload.gitRepository,
                 payload.gitBranch,
-                payload.gitCommit,
+                git_commit,
                 payload.commitMsg,
                 payload.commitAuthor,
-                payload.commitId,
+                commit_id,
                 commit_files_json,
                 payload.dockerRegistry,
                 payload.dockerRepository,
@@ -380,11 +397,18 @@ def _detail_response(
     commit_files = _parse_commit_files(
         row["commit_files"] if "commit_files" in keys else None
     )
+    git_commit, commit_id = _normalize_commit_pair(
+        row["git_commit"],
+        row["commit_id"] if "commit_id" in keys else None,
+    )
+    # Single display value for Git card (avoid empty when only commitId was pushed).
+    commit_sha = git_commit or commit_id
     return templates.TemplateResponse(
         "detail.html",
         {
             "request": request,
             "row": row,
+            "commit_sha": commit_sha,
             "commit_files": commit_files,
             "error": error,
             "admin_configured": admin_password_configured(),

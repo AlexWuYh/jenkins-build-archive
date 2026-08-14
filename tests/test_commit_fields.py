@@ -39,3 +39,29 @@ def test_commit_files_as_string(client, auth_headers):
     r = client.post("/api/v1/builds", json=payload, headers=auth_headers)
     assert r.status_code == 200
     assert r.json()["commitFiles"] == ["a.py", "b.py"]
+
+
+def test_git_commit_falls_back_to_commit_id(client, auth_headers):
+    """Jenkins may only push commitId; Git card should still show the SHA."""
+    payload = sample_build(
+        buildId=3,
+        gitCommit=None,
+        commitId="51d58dc80abcdef",
+        commitMsg="更新Jenkinsfile",
+        commitAuthor="yinghaowu@example.com",
+        commitFiles=["Jenkinsfile"],
+    )
+    # omit gitCommit key entirely
+    payload.pop("gitCommit", None)
+    r = client.post("/api/v1/builds", json=payload, headers=auth_headers)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["gitCommit"] == "51d58dc80abcdef"
+    assert body["commitId"] == "51d58dc80abcdef"
+
+    page = client.get(f"/build/{body['id']}")
+    assert page.status_code == 200
+    assert "51d58dc80abcdef" in page.text
+    # Commit 详情 no longer repeats commitId label
+    assert "commitId" not in page.text
+    assert "更新Jenkinsfile" in page.text
