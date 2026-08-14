@@ -65,3 +65,29 @@ def test_git_commit_falls_back_to_commit_id(client, auth_headers):
     # Commit 详情 no longer repeats commitId label
     assert "commitId" not in page.text
     assert "更新Jenkinsfile" in page.text
+
+
+def test_git_commit_dash_placeholder_falls_back_to_commit_id(client, auth_headers):
+    """Real Jenkins payloads often send gitCommit='-' when GIT_COMMIT is unset."""
+    payload = sample_build(
+        buildId=1819,
+        gitCommit="-",
+        commitId="8952fbcf2e1e8e95b07fddfa5dd04739a97ad671",
+        commitMsg="更新Jenkinsfile",
+        commitAuthor="yinghaowu@deepglint.com",
+        commitFiles=["✏️ Jenkinsfile"],
+    )
+    r = client.post("/api/v1/builds", json=payload, headers=auth_headers)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["gitCommit"] == "8952fbcf2e1e8e95b07fddfa5dd04739a97ad671"
+    assert body["commitId"] == "8952fbcf2e1e8e95b07fddfa5dd04739a97ad671"
+    assert body["gitCommit"] != "-"
+
+    page = client.get(f"/build/{body['id']}")
+    assert page.status_code == 200
+    assert "8952fbcf2e1e8e95b07fddfa5dd04739a97ad671" in page.text
+
+    listing = client.get("/?all=1")
+    assert listing.status_code == 200
+    assert "8952fbcf2e" in listing.text

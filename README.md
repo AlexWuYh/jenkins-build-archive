@@ -210,7 +210,7 @@ post {
 }
 ```
 
-详情页：Git 信息展示 Commit SHA（`gitCommit` 缺省时回退 `commitId`）；Commit 详情展示 Author / Message / Files（不再重复 commitId）。
+详情页：Git 信息展示 Commit SHA（`gitCommit` 缺省或为 `"-"` 等占位符时回退 `commitId`）；Commit 详情展示 Author / Message / Files（不再重复 commitId）。
 
 ### 不使用 Shared Library（curl）
 

@@ -25,7 +25,7 @@ Jenkins Pipeline (Shared Library buildArchive)
 |----|------|
 | `job_name`, `build_id` | 唯一键；幂等 upsert |
 | `build_date` | Jenkins 构建时间（ISO，可带时区） |
-| `git_repository`, `git_branch`, `git_commit` | 基础 Git；`git_commit` 与 `commit_id` 写入/读出时互相回填 |
+| `git_repository`, `git_branch`, `git_commit` | 基础 Git；`git_commit` 与 `commit_id` 互相回填；`"-"` 等占位符视为空 |
 | `commit_msg`, `commit_author`, `commit_id` | Commit 元数据（API camelCase）；详情页 SHA 只在 Git 信息展示一次 |
 | `commit_files` | TEXT，JSON 数组字符串，如 `["a.py","b.py"]` |
 | `docker_*` | Registry / repo / tag / digest |
