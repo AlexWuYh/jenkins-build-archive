@@ -3,7 +3,7 @@ import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from fastapi import FastAPI, Form, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -123,6 +123,24 @@ def row_to_dict(row):
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+FLASH_COOKIE = "jba_flash"
+FLASH_MAX_AGE = 60  # seconds; one-shot display
+
+
+def set_flash_redirect(url: str, message: str) -> RedirectResponse:
+    """PRG flash via cookie so refresh / shared URLs do not keep showing the banner."""
+    resp = RedirectResponse(url=url, status_code=303)
+    resp.set_cookie(
+        key=FLASH_COOKIE,
+        value=quote(message, safe=""),
+        max_age=FLASH_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+        path="/",
+    )
+    return resp
 
 
 def _parse_id_list(ids: List[str]) -> List[int]:
@@ -423,23 +441,10 @@ def index(
     dateTo: Optional[str] = None,
     page: int = Query(default=1, ge=1),
     pageSize: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=100),
-    notice: Optional[str] = None,
-    deletedJob: Optional[str] = None,
-    deletedBuild: Optional[str] = None,
-    deletedCount: Optional[str] = None,
 ):
-    flash = None
-    if notice == "deleted" and deletedJob and deletedBuild:
-        flash = f"已删除构建记录：{deletedJob} #{deletedBuild}"
-    elif notice == "batch-deleted" and deletedCount:
-        flash = f"已批量删除 {deletedCount} 条构建记录"
-    elif notice == "deleted":
-        flash = "已删除构建记录"
-    elif notice == "retention-saved":
-        flash = "保留策略已保存"
-    elif notice == "retention-run":
-        flash = f"保留策略已执行，清理 {deletedCount or 0} 条记录"
-    return templates.TemplateResponse(
+    raw_flash = request.cookies.get(FLASH_COOKIE)
+    flash = unquote(raw_flash) if raw_flash else None
+    response = templates.TemplateResponse(
         "index.html",
         _index_context(
             request,
@@ -454,6 +459,9 @@ def index(
             flash=flash,
         ),
     )
+    if raw_flash:
+        response.delete_cookie(FLASH_COOKIE, path="/")
+    return response
 
 
 @app.get("/build/{record_id}", response_class=HTMLResponse)
@@ -503,12 +511,8 @@ def ui_delete_build(
     with get_db() as db:
         db.execute("DELETE FROM build_records WHERE id=?", (record_id,))
 
-    job_name = quote(row["job_name"], safe="")
-    build_id = quote(str(row["build_id"]), safe="")
-    return RedirectResponse(
-        url=f"/?notice=deleted&deletedJob={job_name}&deletedBuild={build_id}",
-        status_code=303,
-    )
+    msg = f"已删除构建记录：{row['job_name']} #{row['build_id']}"
+    return set_flash_redirect("/", msg)
 
 
 @app.post("/builds/batch-delete", response_class=HTMLResponse)
@@ -548,22 +552,16 @@ async def ui_batch_delete(
         )
         deleted = cursor.rowcount if cursor.rowcount is not None else 0
 
-    return RedirectResponse(
-        url=f"/?notice=batch-deleted&deletedCount={deleted}",
-        status_code=303,
-    )
+    return set_flash_redirect("/", f"已批量删除 {deleted} 条构建记录")
 
 
 @app.get("/admin", response_class=HTMLResponse)
-def admin_page(request: Request, notice: Optional[str] = None, deletedCount: Optional[str] = None):
+def admin_page(request: Request):
     with get_db() as db:
         cfg = load_retention_config(db)
-    flash = None
-    if notice == "retention-saved":
-        flash = "保留策略已保存。"
-    elif notice == "retention-run":
-        flash = f"保留策略已执行，清理 {deletedCount or 0} 条记录。"
-    return templates.TemplateResponse(
+    raw_flash = request.cookies.get(FLASH_COOKIE)
+    flash = unquote(raw_flash) if raw_flash else None
+    response = templates.TemplateResponse(
         "admin.html",
         {
             "request": request,
@@ -573,6 +571,9 @@ def admin_page(request: Request, notice: Optional[str] = None, deletedCount: Opt
             "error": None,
         },
     )
+    if raw_flash:
+        response.delete_cookie(FLASH_COOKIE, path="/")
+    return response
 
 
 @app.post("/admin/retention", response_class=HTMLResponse)
@@ -622,9 +623,9 @@ def admin_save_retention(
         )
         if action == "save_and_run":
             result = apply_retention(db, cfg)
-            return RedirectResponse(
-                url=f"/admin?notice=retention-run&deletedCount={result['deletedTotal']}",
-                status_code=303,
+            return set_flash_redirect(
+                "/admin",
+                f"保留策略已执行，清理 {result['deletedTotal']} 条记录。",
             )
 
-    return RedirectResponse(url="/admin?notice=retention-saved", status_code=303)
+    return set_flash_redirect("/admin", "保留策略已保存。")
