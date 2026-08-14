@@ -76,6 +76,33 @@ def call(Map config = [:]) {
         }
     }
 
+    // currentBuild.duration is often null/0 while the build is still running (e.g. post always).
+    // Prefer explicit config, then duration, then wall-clock since startTimeInMillis.
+    def durationMs = config.durationMs
+    if (durationMs == null) {
+        durationMs = currentBuild.duration
+    }
+    if (durationMs == null || (durationMs instanceof Number && durationMs.longValue() <= 0L)) {
+        try {
+            def start = currentBuild.startTimeInMillis
+            if (start) {
+                durationMs = System.currentTimeMillis() - start
+            }
+        } catch (ignored) {
+            durationMs = null
+        }
+    }
+    if (durationMs != null) {
+        try {
+            durationMs = durationMs as Long
+            if (durationMs < 0L) {
+                durationMs = null
+            }
+        } catch (ignored) {
+            durationMs = null
+        }
+    }
+
     def payload = [
         jobName: env.JOB_NAME,
         buildId: buildNumber as Integer,
@@ -93,7 +120,7 @@ def call(Map config = [:]) {
         dockerImageDigest: env.DOCKER_IMAGE_DIGEST,
         buildResult: result,
         buildUrl: env.BUILD_URL,
-        durationMs: currentBuild.duration
+        durationMs: durationMs
     ]
 
     def json = groovy.json.JsonOutput.toJson(payload)

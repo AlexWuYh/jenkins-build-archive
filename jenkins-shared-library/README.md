@@ -49,6 +49,8 @@ Optional env (set in stages before `post`):
 - `commitId` / `COMMIT_ID` (defaults to `GIT_COMMIT`)
 - `commitFiles` / `COMMIT_FILES` (list, JSON array string, or newline-separated paths)
 
+`durationMs`：优先 `buildArchive(durationMs: …)`，否则 `currentBuild.duration`，若仍为 null/0 则用 `now - startTimeInMillis`（`post { always }` 里很常见）。
+
 Archive failure only logs a warning; it does **not** change the build result.
 
 ## 4. Security notes
