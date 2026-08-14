@@ -60,21 +60,81 @@ def call(Map config = [:]) {
     def commitMsg = config.commitMsg ?: env.commitMsg ?: env.COMMIT_MSG
     def commitAuthor = config.commitAuthor ?: env.commitAuthor ?: env.COMMIT_AUTHOR
     def commitFiles = config.commitFiles ?: env.commitFiles ?: env.COMMIT_FILES
-    // Normalize stringy list env (newline / comma separated) into List when possible
-    if (commitFiles instanceof String) {
-        def text = commitFiles.trim()
-        if (text.startsWith('[')) {
-            try {
-                commitFiles = new groovy.json.JsonSlurper().parseText(text)
-            } catch (ignored) {
-                commitFiles = text.readLines().findAll { it?.trim() }
+    // Flatten to a List of paths. Compatible with:
+    // - already-split List (no \\n)  → kept as-is
+    // - single path string           → one element
+    // - real/escaped newlines in one blob → split
+    // Never throws: on any error, best-effort or null.
+    def splitCommitFiles = { raw ->
+        try {
+            if (raw == null) {
+                return null
             }
-        } else if (text) {
-            commitFiles = text.replace(',', '\n').readLines().collect { it.trim() }.findAll { it }
-        } else {
-            commitFiles = null
+            def items = []
+            if (raw instanceof Collection) {
+                items.addAll(raw.findAll { it != null })
+            } else {
+                def text = raw.toString().trim()
+                if (!text || text in ['-', '—', 'n/a', 'null', 'none']) {
+                    return null
+                }
+                if (text.startsWith('[')) {
+                    try {
+                        def parsed = new groovy.json.JsonSlurper().parseText(text)
+                        if (parsed instanceof Collection) {
+                            items.addAll(parsed.findAll { it != null })
+                        } else if (parsed != null) {
+                            items.add(parsed)
+                        }
+                    } catch (ignored) {
+                        items.add(text)
+                    }
+                } else {
+                    items.add(text)
+                }
+            }
+            def out = []
+            items.each { item ->
+                try {
+                    def s = item.toString()
+                    if (s.contains('\n') || s.contains('\r')) {
+                        s = s.replace('\r\n', '\n').replace('\r', '\n')
+                        s.readLines().each { line ->
+                            def t = line?.trim()
+                            if (t) { out << t }
+                        }
+                    } else if (s.contains('\\n') || s.contains('\\r\\n')) {
+                        def trial = s.replace('\\r\\n', '\n').replace('\\n', '\n').replace('\\r', '\n')
+                        def parts = trial.readLines().collect { it?.trim() }.findAll { it }
+                        // Only accept split when it yields 2+ parts (avoid mangling single paths)
+                        if (parts.size() >= 2) {
+                            out.addAll(parts)
+                        } else if (s.trim()) {
+                            out << s.trim()
+                        }
+                    } else if (s.trim()) {
+                        // Single path, no separators
+                        out << s.trim()
+                    }
+                } catch (ignoredItem) {
+                    // skip bad element
+                }
+            }
+            return out ? out.unique() : null
+        } catch (ignored) {
+            try {
+                if (raw instanceof Collection) {
+                    def fallback = raw.collect { it?.toString()?.trim() }.findAll { it }
+                    return fallback ? fallback : null
+                }
+                def t = raw?.toString()?.trim()
+                return t ? [t] : null
+            } catch (ignored2) {
+                return null
+            }
         }
     }
+    commitFiles = splitCommitFiles(commitFiles)
 
     // currentBuild.duration is often null/0 while the build is still running (e.g. post always).
     // Prefer explicit config, then duration, then wall-clock since startTimeInMillis.

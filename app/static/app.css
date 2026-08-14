@@ -866,25 +866,65 @@ a.btn.danger:hover {
   line-height: 1.55;
 }
 
+.file-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35em;
+  height: 1.35em;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  background: #f1f5f9;
+  vertical-align: middle;
+}
+
 .file-list {
   margin: 0;
   padding: 0;
   list-style: none;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 280px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  max-height: 320px;
   overflow: auto;
 }
 
-.file-list li code {
+.file-list li {
+  margin: 0;
+  max-width: 100%;
+}
+
+.file-list li code,
+.file-chip {
   font-family: var(--mono);
   font-size: 12px;
+  line-height: 1.4;
+  color: #0f172a;
   background: #f8fafc;
-  padding: 3px 8px;
-  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  padding: 5px 10px;
+  border-radius: 999px;
   display: inline-block;
-  word-break: break-all;
+  max-width: min(100%, 42rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+}
+
+/* Long paths: allow wrap on narrow screens */
+@media (max-width: 640px) {
+  .file-list li code,
+  .file-chip {
+    white-space: normal;
+    word-break: break-all;
+    border-radius: 10px;
+  }
 }
 
 .actions {

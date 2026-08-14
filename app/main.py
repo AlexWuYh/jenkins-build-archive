@@ -26,7 +26,7 @@ from .queries import (
     search_builds,
 )
 from .retention import apply_retention, load_retention_config, save_retention_config
-from .schemas import BuildRecordIn
+from .schemas import BuildRecordIn, expand_commit_files
 
 APP_NAME = os.getenv("APP_NAME", "Jenkins Build Archive")
 API_TOKEN = os.getenv("API_TOKEN", "change-me-please")
@@ -102,18 +102,23 @@ def require_token(authorization: Optional[str], x_api_token: Optional[str]) -> N
 
 
 def _parse_commit_files(raw) -> Optional[list]:
-    if raw is None:
-        return None
-    text = str(raw).strip()
-    if not text:
-        return None
+    """Read commit_files column (JSON text) into a display-ready path list.
+
+    Never raises — corrupt/legacy rows degrade to None or a best-effort list.
+    """
     try:
-        data = json.loads(text)
-        if isinstance(data, list):
-            return [str(x) for x in data]
-    except json.JSONDecodeError:
-        pass
-    return [line.strip() for line in text.splitlines() if line.strip()] or None
+        if raw is None:
+            return None
+        text = str(raw).strip()
+        if not text:
+            return None
+        try:
+            data = json.loads(text)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            data = text
+        return expand_commit_files(data)
+    except Exception:
+        return None
 
 
 # Jenkins / scripts often send "-" or similar when GIT_COMMIT is unset.
