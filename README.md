@@ -28,7 +28,7 @@
 
 - **归档写入**：Jenkins HTTP API / Shared Library；`(jobName, buildId)` 幂等
 - **查询展示**：Web UI + REST；Job / 分支 / Commit / Tag 搜索与筛选
-- **Commit 详情**：`commitMsg` / `commitAuthor` / `commitId` / `commitFiles`（详情页）
+- **Commit 详情**：`commitMsg` / `commitAuthor` / `commitFiles`（详情页）；SHA 统一显示在 Git 信息的 Commit（`gitCommit` 与 `commitId` 互相回填）
 - **默认当日**：列表页开始/结束日期默认当天（`TZ`）；「全部历史」=`/?all=1`
 - **管理能力**：管理密码删除 / 批量删除；最长保留天数等策略
 - **运维友好**：Docker Compose、健康检查、归档失败不影响 Jenkins 结果
@@ -210,7 +210,7 @@ post {
 }
 ```
 
-详情页会展示 `commitMsg` / `commitAuthor` / `commitId` / `commitFiles`。
+详情页：Git 信息展示 Commit SHA（`gitCommit` 缺省时回退 `commitId`）；Commit 详情展示 Author / Message / Files（不再重复 commitId）。
 
 ### 不使用 Shared Library（curl）
 
@@ -336,7 +336,7 @@ Tag 可被覆盖，长期追溯请同时记录 Digest。服务**不会**主动�
 |------|------|------|
 | `jobName`, `buildId`, `buildDate` | 是 | 幂等键 + 构建时间 |
 | `gitRepository`, `gitBranch`, `gitCommit` | 否 | 基础 Git |
-| `commitMsg`, `commitAuthor`, `commitId` | 否 | Commit 详情（详情页展示） |
+| `commitMsg`, `commitAuthor`, `commitId` | 否 | Commit 元数据；`commitId` 与 `gitCommit` 互相回填，详情页 SHA 只显示一次 |
 | `commitFiles` | 否 | `string[]`，或换行/JSON 数组字符串 |
 | `docker*` / `buildResult` / `buildUrl` / `durationMs` | 否 | 镜像与结果；`buildUrl` 仅 `http(s)://` |
 

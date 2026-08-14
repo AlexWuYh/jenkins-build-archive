@@ -30,7 +30,7 @@
 | 读接口 | 列表/详情/stats 与 Web UI |
 | 管理操作 | Web 删除 / 批量删除 / 保留策略（`ADMIN_PASSWORD`） |
 | 保留策略 | 按天数 / 每 Job 最大条数自动清理 |
-| Commit 详情 | `commitMsg` / `commitAuthor` / `commitId` / `commitFiles`（Jenkins 推送） |
+| Commit 详情 | `commitMsg` / `commitAuthor` / `commitFiles`；SHA 在 Git 信息（`gitCommit`↔`commitId` 回填） |
 
 ## Agent 硬约束
 

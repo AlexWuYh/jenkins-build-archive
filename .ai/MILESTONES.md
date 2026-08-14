@@ -135,14 +135,15 @@
 - **目标**：归档并展示 Jenkins 推送的 commitMsg / commitAuthor / commitId / commitFiles
 - **范围**：
   - DB 列 + 幂等迁移；API camelCase 入参
-  - 详情页「Commit 详情」卡片
+  - 详情页「Commit 详情」卡片（Author / Message / Files）
+  - Git 信息 Commit 与 `commitId` 互相回填，详情页 SHA 只显示一次（避免重复/空值）
   - Shared Library 采集 env / call 参数
   - README / `.ai` 文档同步
 - **验收**：
   - [x] POST 可写入并 GET 回读
-  - [x] 详情页展示 message/author/id/files
+  - [x] 详情页展示 message/author/files；SHA 在 Git 信息（可回退 commitId）
   - [x] 列表兼容旧库无列（迁移后可用）
-  - [x] pytest 覆盖
+  - [x] pytest 覆盖（含仅 commitId 时 Git 卡片有值）
 
 ### 同期已落地（文档对齐，不单列里程碑）
 

@@ -164,7 +164,8 @@
             <td><a class="build-link" href="/build/{{ row.id }}" title="查看构建详情">#{{ row.build_id }}</a></td>
             <td class="muted">{{ row.build_date }}</td>
             <td><span class="pill branch">{{ row.git_branch or '—' }}</span></td>
-            <td><code title="{{ row.git_commit or '' }}">{{ (row.git_commit[:10] if row.git_commit else '—') }}</code></td>
+            {% set commit_disp = row.git_commit or row['commit_id'] %}
+            <td><code title="{{ commit_disp or '' }}">{{ (commit_disp[:10] if commit_disp else '—') }}</code></td>
             <td><span class="docker" title="{{ row.docker_image_tag or '' }}">{{ row.docker_image_tag or '—' }}</span></td>
             <td><span class="result {{ (row.build_result or 'UNKNOWN')|lower }}">{{ row.build_result or 'UNKNOWN' }}</span></td>
           </tr>

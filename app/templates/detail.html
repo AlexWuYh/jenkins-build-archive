@@ -50,20 +50,18 @@
         {% endif %}
       </dd>
       <dt>Branch</dt><dd><span class="pill branch">{{ row.git_branch or '—' }}</span></dd>
-      <dt>Commit</dt><dd><code class="full">{{ row.git_commit or '—' }}</code></dd>
+      <dt>Commit</dt><dd><code class="full">{{ commit_sha or '—' }}</code></dd>
     </dl>
   </section>
 
   <section class="info-card wide">
     <h2>Commit 详情</h2>
     <dl>
-      <dt>commitId</dt>
-      <dd><code class="full">{{ row['commit_id'] or '—' }}</code></dd>
-      <dt>commitAuthor</dt>
+      <dt>Author</dt>
       <dd>{{ row['commit_author'] or '—' }}</dd>
-      <dt>commitMsg</dt>
+      <dt>Message</dt>
       <dd class="commit-msg">{{ row['commit_msg'] or '—' }}</dd>
-      <dt>commitFiles</dt>
+      <dt>Files</dt>
       <dd>
         {% if commit_files %}
         <ul class="file-list">
