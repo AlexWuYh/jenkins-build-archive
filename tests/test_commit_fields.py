@@ -41,6 +41,95 @@ def test_commit_files_as_string(client, auth_headers):
     assert r.json()["commitFiles"] == ["a.py", "b.py"]
 
 
+def test_commit_files_single_element_with_embedded_newlines(client, auth_headers):
+    """Jenkins often sends one list item with real or escaped newlines."""
+    payload = sample_build(
+        buildId=58,
+        commitMsg="更新Jenkinsfile, Jenkinsfile-Arm",
+        commitAuthor="yinghaowu@deepglint.com",
+        commitId="cd238d2ab716ba76a4f0a9e5f1e24a42370f0307",
+        commitFiles=["✏️ Jenkinsfile\n✏️ Jenkinsfile-Arm"],
+    )
+    r = client.post("/api/v1/builds", json=payload, headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["commitFiles"] == ["✏️ Jenkinsfile", "✏️ Jenkinsfile-Arm"]
+
+    # literal backslash-n (double-escaped from shell)
+    payload2 = sample_build(
+        buildId=59,
+        commitFiles=["✏️ Jenkinsfile\\n✏️ Jenkinsfile-Arm"],
+    )
+    r2 = client.post("/api/v1/builds", json=payload2, headers=auth_headers)
+    assert r2.status_code == 200
+    assert r2.json()["commitFiles"] == ["✏️ Jenkinsfile", "✏️ Jenkinsfile-Arm"]
+
+    page = client.get(f"/build/{r.json()['id']}")
+    assert page.status_code == 200
+    assert "file-chip" in page.text
+    assert "Jenkinsfile-Arm" in page.text
+    # Should render as separate chips, not one blob with \\n
+    assert "Jenkinsfile\\n" not in page.text
+    assert page.text.count("file-chip") >= 2
+
+
+def test_commit_files_without_newlines_unchanged(client, auth_headers):
+    """Normal list / single path must not be mangled and must not error."""
+    # multi-element list, no \n anywhere
+    r = client.post(
+        "/api/v1/builds",
+        json=sample_build(
+            buildId=60,
+            commitFiles=["Jenkinsfile", "Jenkinsfile-Arm", "src/main.py"],
+        ),
+        headers=auth_headers,
+    )
+    assert r.status_code == 200
+    assert r.json()["commitFiles"] == ["Jenkinsfile", "Jenkinsfile-Arm", "src/main.py"]
+
+    # single path string
+    r2 = client.post(
+        "/api/v1/builds",
+        json=sample_build(buildId=61, commitFiles="Jenkinsfile"),
+        headers=auth_headers,
+    )
+    assert r2.status_code == 200
+    assert r2.json()["commitFiles"] == ["Jenkinsfile"]
+
+    # empty / placeholder → null, not 422
+    for bid, files in ((62, []), (63, "-"), (64, None), (65, [""])):
+        payload = sample_build(buildId=bid, commitFiles=files)
+        if files is None:
+            payload.pop("commitFiles", None)
+        resp = client.post("/api/v1/builds", json=payload, headers=auth_headers)
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["commitFiles"] is None
+
+
+def test_expand_commit_files_never_raises():
+    from app.schemas import expand_commit_files
+
+    cases = [
+        None,
+        "",
+        "-",
+        "Jenkinsfile",
+        ["a.py", "b.py"],
+        ["single"],
+        "a.py\nb.py",
+        ["a\\nb"],
+        "not-json [ broken",
+        {"weird": "dict"},
+        12345,
+        [None, "", "ok.py"],
+        [["nested", "list"]],
+    ]
+    for case in cases:
+        result = expand_commit_files(case)
+        assert result is None or (
+            isinstance(result, list) and all(isinstance(x, str) for x in result)
+        )
+
+
 def test_git_commit_falls_back_to_commit_id(client, auth_headers):
     """Jenkins may only push commitId; Git card should still show the SHA."""
     payload = sample_build(

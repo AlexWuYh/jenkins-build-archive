@@ -74,12 +74,12 @@
       <dd>{{ row['commit_author'] or '—' }}</dd>
       <dt>Message</dt>
       <dd class="commit-msg">{{ row['commit_msg'] or '—' }}</dd>
-      <dt>Files</dt>
+      <dt>Files{% if commit_files %} <span class="file-count">{{ commit_files|length }}</span>{% endif %}</dt>
       <dd>
         {% if commit_files %}
-        <ul class="file-list">
+        <ul class="file-list" aria-label="变更文件列表">
           {% for f in commit_files %}
-          <li><code>{{ f }}</code></li>
+          <li><code class="file-chip" title="{{ f }}">{{ f }}</code></li>
           {% endfor %}
         </ul>
         {% else %}

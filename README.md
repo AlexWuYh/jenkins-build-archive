@@ -164,7 +164,7 @@ pipeline {
 | commitMsg | `commitMsg` / `COMMIT_MSG` 或 `buildArchive(commitMsg: …)` |
 | commitAuthor | `commitAuthor` / `COMMIT_AUTHOR` 或 call 参数 |
 | commitId | `commitId` / `COMMIT_ID`（默认回退 `GIT_COMMIT`） |
-| commitFiles | `commitFiles` / `COMMIT_FILES`（List / JSON 数组字符串 / 换行分隔） |
+| commitFiles | `commitFiles` / `COMMIT_FILES`（List / 换行或 JSON 字符串；单元素内嵌 `\n` 也会拆成多文件） |
 | dockerRegistry / Repository / Tag / Digest | `DOCKER_*` 或 `DockerImageTag` |
 | buildResult | `currentBuild.currentResult` |
 | buildUrl | `BUILD_URL` |
@@ -337,7 +337,7 @@ Tag 可被覆盖，长期追溯请同时记录 Digest。服务**不会**主动�
 | `jobName`, `buildId`, `buildDate` | 是 | 幂等键 + 构建时间 |
 | `gitRepository`, `gitBranch`, `gitCommit` | 否 | 基础 Git |
 | `commitMsg`, `commitAuthor`, `commitId` | 否 | Commit 元数据；`commitId` 与 `gitCommit` 互相回填，详情页 SHA 只显示一次 |
-| `commitFiles` | 否 | `string[]`，或换行/JSON 数组字符串 |
+| `commitFiles` | 否 | `string[]`，或换行/JSON 字符串；元素内 `\n` 会拆成多路径 |
 | `docker*` / `buildResult` / `buildUrl` / `durationMs` | 否 | 镜像与结果；`buildUrl` 仅 `http(s)://` |
 
 - `dateFrom` / `dateTo`：ISO 或 `YYYY-MM-DD`（按整天）
