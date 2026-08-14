@@ -168,7 +168,7 @@ pipeline {
 | dockerRegistry / Repository / Tag / Digest | `DOCKER_*` 或 `DockerImageTag` |
 | buildResult | `currentBuild.currentResult` |
 | buildUrl | `BUILD_URL` |
-| durationMs | `currentBuild.duration` |
+| durationMs | `config.durationMs` → `currentBuild.duration` → 自 `startTimeInMillis` 推算（构建未结束时常为 null/0） |
 
 ### 推送镜像并写入 Digest
 

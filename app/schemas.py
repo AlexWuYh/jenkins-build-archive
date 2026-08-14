@@ -37,6 +37,28 @@ class BuildRecordIn(BaseModel):
             raise ValueError("buildUrl must start with http:// or https://")
         return stripped
 
+    @field_validator("durationMs", mode="before")
+    @classmethod
+    def normalize_duration_ms(cls, value: Any) -> Optional[int]:
+        """Accept int/float/numeric string; treat empty / placeholder as missing."""
+        if value is None:
+            return None
+        if isinstance(value, str):
+            text = value.strip()
+            if not text or text in {"-", "—", "–"}:
+                return None
+            try:
+                value = float(text)
+            except ValueError as exc:
+                raise ValueError("durationMs must be a non-negative number") from exc
+        if isinstance(value, bool):
+            raise ValueError("durationMs must be a non-negative number")
+        if isinstance(value, (int, float)):
+            if value < 0:
+                raise ValueError("durationMs must be >= 0")
+            return int(value)
+        raise ValueError("durationMs must be a non-negative number")
+
     @field_validator("commitFiles", mode="before")
     @classmethod
     def normalize_commit_files(cls, value: Any) -> Optional[List[str]]:

@@ -67,6 +67,26 @@ def test_git_commit_falls_back_to_commit_id(client, auth_headers):
     assert "更新Jenkinsfile" in page.text
 
 
+def test_duration_ms_shown_on_detail(client, auth_headers):
+    payload = sample_build(buildId=10, durationMs=125500)
+    r = client.post("/api/v1/builds", json=payload, headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["durationMs"] == 125500
+
+    page = client.get(f"/build/{r.json()['id']}")
+    assert page.status_code == 200
+    assert "构建耗时" in page.text
+    assert "2 分" in page.text
+    assert "5.5 秒" in page.text
+
+
+def test_duration_ms_accepts_numeric_string(client, auth_headers):
+    payload = sample_build(buildId=11, durationMs="90000")
+    r = client.post("/api/v1/builds", json=payload, headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["durationMs"] == 90000
+
+
 def test_git_commit_dash_placeholder_falls_back_to_commit_id(client, auth_headers):
     """Real Jenkins payloads often send gitCommit='-' when GIT_COMMIT is unset."""
     payload = sample_build(
