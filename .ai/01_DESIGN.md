@@ -66,7 +66,8 @@ Jenkins Pipeline (Shared Library buildArchive)
 - 分支：`branch` 为 LIKE
 - 日期：`dateFrom`/`dateTo` 支持 ISO 或 `YYYY-MM-DD`（按整天）
 - Web 列表：未带日期参数时默认填入本地当日（`TZ`）；`/?all=1` 为全部历史
-- 分页：`pageSize` 20/50/100；深分页有上限（见 `queries.MAX_PAGE`）
+- 分页：`pageSize` 20/50/100；深分页有上限（见 `queries.MAX_PAGE`）。全部历史的翻页链接必须保留 `all=1`（空 `dateFrom`/`dateTo` 会被默认回填为当天）
+- 列表「序号」为当前筛选结果中的全局序号（跨页连续）
 
 ## 保留策略
 

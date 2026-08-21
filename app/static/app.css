@@ -39,6 +39,8 @@
 html {
   -webkit-font-smoothing: antialiased;
   height: 100%;
+  scroll-padding-top: 72px;
+  scroll-padding-bottom: 72px;
 }
 
 body {
@@ -511,9 +513,21 @@ a:not(.btn):not(.brand):not(.nav-link):hover {
 .result-head {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
   color: var(--muted);
   font-size: 13px;
   margin: 18px 2px 8px;
+  scroll-margin-top: 72px;
+}
+
+.result-head-pager {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .result-head b {
@@ -521,11 +535,16 @@ a:not(.btn):not(.brand):not(.nav-link):hover {
 }
 
 .table-card {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .table-scroll {
   overflow: auto;
+  border-radius: var(--radius);
+}
+
+.table-card.has-pager .table-scroll {
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .batch-form {
@@ -570,6 +589,17 @@ tbody tr:last-child td {
 .col-check {
   width: 44px;
   text-align: center;
+}
+
+.col-index {
+  width: 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+th.col-index {
+  text-align: right;
 }
 
 .col-check input {
@@ -728,9 +758,10 @@ code {
 .pagination {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
-  padding: 22px;
+  padding: 12px 16px;
   color: var(--muted);
   font-size: 13px;
 }
@@ -739,7 +770,10 @@ code {
   color: var(--link);
   text-decoration: none;
   font-weight: 650;
-  padding: 8px 12px;
+  padding: 6px 12px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
   border-radius: 999px;
   border: 1px solid #bfdbfe;
   background: #fff;
@@ -749,6 +783,35 @@ code {
   background: var(--link-soft);
   border-color: #93c5fd;
   color: var(--link-hover);
+}
+
+.pagination a:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.pagination-status {
+  padding: 6px 4px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.pagination-toolbar {
+  padding: 0;
+  justify-content: flex-end;
+}
+
+.pagination-toolbar a {
+  min-height: 32px;
+  padding: 4px 10px;
+}
+
+.pagination-table {
+  margin: 0;
+  border-top: 1px solid var(--line);
+  background: #fff;
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 
 /* Primary button keeps solid dark (not link blue) */
@@ -1253,6 +1316,12 @@ select:focus-visible {
   .detail-hero {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .result-head-pager,
+  .pagination-toolbar {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .info-card dl {

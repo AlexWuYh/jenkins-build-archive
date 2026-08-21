@@ -18,6 +18,7 @@ from .queries import (
     JOB_DROPDOWN_LIMIT,
     MAX_PAGE,
     apply_default_today_dates,
+    build_list_query,
     clamp_page_size,
     load_global_stats,
     load_job_filter_options,
@@ -494,6 +495,17 @@ def _index_context(
     today = local_today_iso()
     # Visual “当日” when range is exactly local today (default or user-selected).
     is_today_range = bool(dateFrom and dateTo and dateFrom == dateTo == today)
+    all_history = not (dateFrom or dateTo)
+    query_base = build_list_query(
+        q=q or "",
+        job=job or "",
+        branch=branch or "",
+        result=result or "",
+        date_from=dateFrom or "",
+        date_to=dateTo or "",
+        page_size=page_size,
+        all_history=all_history,
+    )
     return {
         "request": request,
         "rows": [_row_for_ui(r) for r in rows],
@@ -517,6 +529,8 @@ def _index_context(
         "dateTo": dateTo or "",
         "filter_default_today": used_default_today,
         "is_today_range": is_today_range,
+        "all_history": all_history,
+        "query_base": query_base,
         "today": today,
         "flash": flash,
         "error": error,

@@ -20,7 +20,7 @@
 │   ├── static/
 │   │   ├── app.css
 │   │   └── favicon.svg
-│   └── templates/            # base / index / detail / admin
+│   └── templates/            # base / index / detail / admin / _pagination
 ├── docs/images/              # README 截图等
 ├── tests/
 ├── jenkins-shared-library/

@@ -116,7 +116,7 @@
   {% endif %}
 </form>
 
-<div class="result-head">
+<div class="result-head" id="build-results">
   <div>
     找到 <b>{{ total }}</b> 条构建记录
     {% if is_today_range %}
@@ -128,7 +128,17 @@
     {% endif %}
     <span class="result-sub">· 每页 {{ page_size }} 条</span>
   </div>
-  <div>第 {{ page }} / {{ total_pages }} 页{% if deep_page_capped %} <span class="result-sub">（深分页已限 {{ total_pages }} 页，请加筛选）</span>{% endif %}</div>
+  <div class="result-head-pager">
+    {% if deep_page_capped %}
+    <span class="result-sub">深分页已限 {{ total_pages }} 页，请加筛选</span>
+    {% endif %}
+    {% set pager_label = "结果列表分页" %}
+    {% set pager_class = "pagination-toolbar" %}
+    {% include "_pagination.html" %}
+    {% if total_pages <= 1 %}
+    <span class="result-sub">第 {{ page }} / {{ total_pages }} 页</span>
+    {% endif %}
+  </div>
 </div>
 
 {% if total > 5000 and not job and not q and not branch and not dateFrom %}
@@ -136,22 +146,24 @@
 {% endif %}
 
 <form id="batch-delete-form" class="batch-form" method="post" action="/builds/batch-delete" autocomplete="off">
-  <section class="table-card">
+  <section class="table-card{% if total_pages > 1 %} has-pager{% endif %}">
     <div class="table-scroll">
       <table>
+        <caption class="sr-only">构建记录，第 {{ page }} 页，共 {{ total_pages }} 页</caption>
         <thead>
           <tr>
-            <th class="col-check">
+            <th scope="col" class="col-check">
               <label class="sr-only" for="select-all">全选</label>
               <input type="checkbox" id="select-all" aria-label="全选当前页" {% if not admin_configured or not rows %}disabled{% endif %}>
             </th>
-            <th>Job</th>
-            <th>Build</th>
-            <th>构建时间</th>
-            <th>Git Branch</th>
-            <th>Commit</th>
-            <th>Docker Image</th>
-            <th>Result</th>
+            <th scope="col" class="col-index">序号</th>
+            <th scope="col">Job</th>
+            <th scope="col">Build</th>
+            <th scope="col">构建时间</th>
+            <th scope="col">Git Branch</th>
+            <th scope="col">Commit</th>
+            <th scope="col">Docker Image</th>
+            <th scope="col">Result</th>
           </tr>
         </thead>
         <tbody>
@@ -160,6 +172,7 @@
             <td class="col-check">
               <input class="row-check" type="checkbox" name="ids" value="{{ row.id }}" aria-label="选择 {{ row.job_name }} #{{ row.build_id }}" {% if not admin_configured %}disabled{% endif %}>
             </td>
+            <td class="col-index muted">{{ (page - 1) * page_size + loop.index }}</td>
             <td><a class="job" href="/build/{{ row.id }}" title="查看构建详情">{{ row.job_name }}</a></td>
             <td><a class="build-link" href="/build/{{ row.id }}" title="查看构建详情">#{{ row.build_id }}</a></td>
             <td class="muted">{{ row.build_date }}</td>
@@ -171,12 +184,15 @@
           </tr>
           {% else %}
           <tr>
-            <td colspan="8" class="empty">暂无构建记录。完成第一次 Jenkins 构建后，这里会自动出现数据。</td>
+            <td colspan="9" class="empty">暂无构建记录。完成第一次 Jenkins 构建后，这里会自动出现数据。</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% set pager_label = "表格底部分页" %}
+    {% set pager_class = "pagination-table" %}
+    {% include "_pagination.html" %}
   </section>
 
   {% if rows %}
@@ -198,21 +214,6 @@
   </section>
   {% endif %}
 </form>
-
-{% if total_pages > 1 %}
-<nav class="pagination" aria-label="分页">
-  {% set base = 'q=' ~ (q|urlencode) ~ '&job=' ~ (job|urlencode) ~ '&branch=' ~ (branch|urlencode) ~ '&result=' ~ (result|urlencode) ~ '&dateFrom=' ~ (dateFrom|urlencode) ~ '&dateTo=' ~ (dateTo|urlencode) ~ '&pageSize=' ~ page_size %}
-  {% if page > 1 %}
-  <a href="/?{{ base }}&page=1">首页</a>
-  <a href="/?{{ base }}&page={{ page-1 }}">← 上一页</a>
-  {% endif %}
-  <span>{{ page }} / {{ total_pages }}</span>
-  {% if page < total_pages %}
-  <a href="/?{{ base }}&page={{ page+1 }}">下一页 →</a>
-  <a href="/?{{ base }}&page={{ total_pages }}">末页</a>
-  {% endif %}
-</nav>
-{% endif %}
 
 <script>
 (function () {

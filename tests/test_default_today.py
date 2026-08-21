@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from conftest import sample_build
-from app.queries import apply_default_today_dates, local_today_iso
+from app.queries import apply_default_today_dates, build_list_query, local_today_iso
 
 
 def test_local_today_iso_format():
@@ -75,3 +75,57 @@ def test_index_defaults_to_today(client, auth_headers, monkeypatch):
     r2 = client.get("/", params={"all": "1"})
     assert "找到 <b>2</b> 条构建记录" in r2.text
     assert 'aria-label="选择 yesterday-job #102"' in r2.text
+
+
+def test_build_list_query_preserves_all_history():
+    qs = build_list_query(all_history=True, page_size=20, q="demo")
+    assert "all=1" in qs
+    assert "dateFrom" not in qs
+    assert "dateTo" not in qs
+    assert "q=demo" in qs
+    assert "pageSize=20" in qs
+
+    ranged = build_list_query(
+        date_from="2026-08-21",
+        date_to="2026-08-21",
+        page_size=50,
+        all_history=False,
+    )
+    assert "all=" not in ranged
+    assert "dateFrom=2026-08-21" in ranged
+    assert "pageSize=50" in ranged
+
+
+def test_html_all_history_pagination_keeps_filter_and_row_numbers(
+    client, auth_headers
+):
+    for i in range(1, 5):
+        client.post(
+            "/api/v1/builds",
+            json=sample_build(buildId=i, jobName=f"page-job-{i}"),
+            headers=auth_headers,
+        )
+
+    listing = client.get("/", params={"all": "1", "pageSize": 2})
+    assert listing.status_code == 200
+    assert "找到 <b>4</b> 条构建记录" in listing.text
+    assert "all=1&amp;pageSize=2&amp;page=2" in listing.text
+    assert 'scope="col" class="col-index">序号</th>' in listing.text
+    assert 'class="col-index muted">1</td>' in listing.text
+    assert 'aria-label="结果列表分页"' in listing.text
+    assert 'aria-label="表格底部分页"' in listing.text
+
+    page2 = client.get("/", params={"all": "1", "pageSize": 2, "page": 2})
+    assert page2.status_code == 200
+    today = local_today_iso()
+    assert "找到 <b>4</b> 条构建记录" in page2.text
+    assert "全部历史" in page2.text
+    assert f'name="dateFrom" value="{today}"' not in page2.text
+    assert 'name="all" value="1"' in page2.text
+    assert 'class="col-index muted">3</td>' in page2.text
+    assert 'class="col-index muted">4</td>' in page2.text
+
+    toolbar = page2.text.find('aria-label="结果列表分页"')
+    table_pager = page2.text.find('aria-label="表格底部分页"')
+    batch = page2.text.find('id="batch-delete-heading"')
+    assert 0 < toolbar < table_pager < batch
