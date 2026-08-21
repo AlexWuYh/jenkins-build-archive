@@ -1,0 +1,13 @@
+{% if total_pages > 1 %}
+<nav class="pagination {{ pager_class }}" aria-label="{{ pager_label }}">
+  {% if page > 1 %}
+  <a href="/?{{ query_base }}&amp;page=1#build-results">首页</a>
+  <a href="/?{{ query_base }}&amp;page={{ page - 1 }}#build-results">上一页</a>
+  {% endif %}
+  <span class="pagination-status" aria-current="page">第 {{ page }} / {{ total_pages }} 页</span>
+  {% if page < total_pages %}
+  <a href="/?{{ query_base }}&amp;page={{ page + 1 }}#build-results">下一页</a>
+  <a href="/?{{ query_base }}&amp;page={{ total_pages }}#build-results">末页</a>
+  {% endif %}
+</nav>
+{% endif %}

@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from datetime import datetime
 from typing import Any, Optional, Sequence
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 # Columns needed by list UI / API list payload (detail still uses SELECT *).
@@ -108,6 +109,42 @@ def apply_default_today_dates(
         dt = today
         used = True
     return df, dt, used
+
+
+def build_list_query(
+    *,
+    q: str = "",
+    job: str = "",
+    branch: str = "",
+    result: str = "",
+    date_from: str = "",
+    date_to: str = "",
+    page_size: int = DEFAULT_PAGE_SIZE,
+    all_history: bool = False,
+) -> str:
+    """Query string for list filter/pagination links (page is appended by the UI).
+
+    All-history mode must emit ``all=1`` and omit empty dates, otherwise the
+    list view would refill dateFrom/dateTo with today.
+    """
+    items: list[tuple[str, str]] = []
+    if all_history:
+        items.append(("all", "1"))
+    else:
+        if date_from:
+            items.append(("dateFrom", date_from))
+        if date_to:
+            items.append(("dateTo", date_to))
+    if q:
+        items.append(("q", q))
+    if job:
+        items.append(("job", job))
+    if branch:
+        items.append(("branch", branch))
+    if result:
+        items.append(("result", result))
+    items.append(("pageSize", str(page_size)))
+    return urlencode(items)
 
 
 def build_filters(

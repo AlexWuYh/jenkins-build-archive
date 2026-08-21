@@ -29,7 +29,7 @@
 - **归档写入**：Jenkins HTTP API / Shared Library；`(jobName, buildId)` 幂等
 - **查询展示**：Web UI + REST；Job / 分支 / Commit / Tag 搜索与筛选
 - **Commit 详情**：`commitMsg` / `commitAuthor` / `commitFiles`（详情页）；SHA 统一显示在 Git 信息的 Commit（`gitCommit` 与 `commitId` 互相回填）
-- **默认当日**：列表页开始/结束日期默认当天（`TZ`）；「全部历史」=`/?all=1`
+- **默认当日**：列表页开始/结束日期默认当天（`TZ`）；「全部历史」=`/?all=1`（翻页会保留该范围）
 - **管理能力**：管理密码删除 / 批量删除；最长保留天数等策略
 - **运维友好**：Docker Compose、健康检查、归档失败不影响 Jenkins 结果
 
