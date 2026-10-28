@@ -1,0 +1,39 @@
+name: Release
+
+# 创建（发布）Release 时，将该 tag 对应的源码打包为 zip 并上传到 Release 资产。
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package source zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Build source archive
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          NAME="jenkins-build-archive-${TAG}"
+          # git archive 仅打包已跟踪文件，天然排除 .git / .venv / data / .env
+          git archive --format=zip --prefix="${NAME}/" -o "${NAME}.zip" "${TAG}"
+          sha256sum "${NAME}.zip" > "${NAME}.zip.sha256"
+          ls -lh "${NAME}.zip" "${NAME}.zip.sha256"
+          echo "ASSET=${NAME}.zip" >> "$GITHUB_ENV"
+
+      - name: Upload assets to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh release upload "${TAG}" "${ASSET}" "${ASSET}.sha256" \
+            --clobber --repo "${{ github.repository }}"
