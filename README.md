@@ -4,7 +4,13 @@
 
 面向**内网**使用：写接口使用 `API_TOKEN`，Web 管理使用 `ADMIN_PASSWORD`。
 
+**构建列表**
+
 ![Web UI 截图](docs/images/web-ui.png)
+
+**构建详情**
+
+![构建详情页截图](docs/images/build-detail.png)
 
 ---
 
