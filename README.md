@@ -390,7 +390,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8080
 pytest -q
 ```
 
-协作约定见 [`AGENTS.md`](./AGENTS.md) 与 [`.ai/`](./.ai/)。
+协作约定见 [`AGENTS.md`](./AGENTS.md)。
 
 ---
 
@@ -404,8 +404,6 @@ pytest -q
 | Token / 管理密码泄露 | 分用途保管；定期轮换 |
 | 默认占位密钥 | 部署前必须修改 |
 | 保留策略过激 | 先备份再收紧 |
-
-详见 [`.ai/03_SECURITY.md`](./.ai/03_SECURITY.md)。
 
 ---
 
